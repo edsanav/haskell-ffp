@@ -30,3 +30,23 @@ myMult x y = case sameSign of
           | count == 0 = 0
           | otherwise = (abs a) + (go a b (count-1))
         sameSign = (x >= 1 && y >= 1) || (x <= (-1) && y<=(-1))
+        
+data DividedResult = Result Integer | DividedByZero deriving (Show)
+
+dividedBy:: Integral a => a -> a -> DividedResult
+dividedBy num denom = case (sameSign, result) of
+  (_, DividedByZero) -> DividedByZero
+  (True, res) ->  res
+  (False, Result x) -> Result $ negate x 
+  where go n d count
+         | d == 0 = DividedByZero
+         | n < d = Result (count)
+         | otherwise = go (n - d) d (count  + 1)
+        result = go (abs num) (abs denom) 0 
+        sameSign = (num >= 1 && denom >= 1) || (num <= (-1) && denom <=(-1))
+        
+        
+mc91::Integral a => a -> a
+mc91 x 
+  | x > 100 = x - 10
+  | otherwise = mc91 . mc91 $ (x + 11)
