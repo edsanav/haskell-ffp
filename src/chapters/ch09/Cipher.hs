@@ -4,8 +4,6 @@ import Data.Char
 
 letPos = [(l, ord l) | l <- concat $ repeat ['a' .. 'z']]
 
--- TODO do case > 'z', substract 26
-
 data Direction = LeftShift | RightShift
 
 shiftChar :: Direction -> Int -> Char -> Char
