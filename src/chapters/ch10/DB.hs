@@ -1,5 +1,5 @@
 module DB where
-  
+
 import Data.Time
 
 data DatabaseItem
@@ -8,13 +8,10 @@ data DatabaseItem
   | DbDate UTCTime
   deriving (Eq, Ord, Show)
 
-
 theDatabase :: [DatabaseItem]
 theDatabase =
   [ DbDate
-      ( UTCTime
-          (fromGregorian 1911 5 1)
-          (secondsToDiffTime 34123)
+      ( UTCTime (fromGregorian 1911 5 1) (secondsToDiffTime 34123)
       ),
     DbNumber 9001,
     DbString "Hello, world!",
@@ -24,9 +21,29 @@ theDatabase =
           (secondsToDiffTime 34123)
       )
   ]
-  
 
-filterDbDate::[DatabaseItem] -> [UTCTime]
-filterDbDate xs = foldr (\a b -> case a of 
-                                    DbDate x -> x:b
-                                    _ -> b) [] xs
+filterDbDate :: [DatabaseItem] -> [UTCTime]
+filterDbDate = foldr extractor []
+  where
+    extractor a b = case a of
+      DbDate x -> x : b
+      _ -> b
+
+filterDbNumber :: [DatabaseItem] -> [Integer]
+filterDbNumber = foldr extractor []
+  where
+    extractor a b = case a of
+      DbNumber x -> x : b
+      _ -> b
+
+mostRecent :: [DatabaseItem] -> UTCTime
+mostRecent = getMostRecent . filterDbDate
+  where
+    getMostRecent xs =
+      foldr
+        (\a b -> if (a > b) then a else b)
+        (UTCTime (fromGregorian 0 0 0) (secondsToDiffTime 0))
+        xs
+
+mostRecent' :: [DatabaseItem] -> UTCTime
+mostRecent' = maximum . filterDbDate
