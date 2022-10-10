@@ -47,3 +47,10 @@ mostRecent = getMostRecent . filterDbDate
 
 mostRecent' :: [DatabaseItem] -> UTCTime
 mostRecent' = maximum . filterDbDate
+
+sumDb::[DatabaseItem] -> Integer
+sumDb = foldr (+) 0 . filterDbNumber
+
+-- TODO: improve this 
+avgDb :: [DatabaseItem] -> Double
+avgDb xs = (\x -> fromIntegral (  div (sumDb x) (toInteger $ length (filterDbNumber xs)))) xs
