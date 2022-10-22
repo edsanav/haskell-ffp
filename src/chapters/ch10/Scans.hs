@@ -13,4 +13,4 @@ factoFold n =  foldl (*) 1 [1..n]
 
 --  scanl (\b a-> a:b)  [1] [1..10] multiply this
 facto::[Integer]
-facto = undefined
+facto = scanl (*) 1 [1..]
