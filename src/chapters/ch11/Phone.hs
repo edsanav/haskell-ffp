@@ -20,6 +20,7 @@ sample =
       ('0', " +_0"),
       ('#', ".,#")
     ]
+
 -- validButtons = "1234567890*#"
 type Digit = Char
 
@@ -42,6 +43,22 @@ convo =
 -- Use elemIndex to find position
 -- use foldr
 reverseTaps :: DaPhone -> Char -> [(Digit, Presses)]
-reverseTaps p c
-  | isUpper c = (reverseTaps p '^')++(reverseTaps p (toLower c))
-  | otherwise = undefined
+reverseTaps (DaPhone []) _ = []
+reverseTaps p@(DaPhone (x : xs)) c
+  | isUpper c = (reverseTaps p '^') ++ (reverseTaps p (toLower c))
+  | otherwise = case elemIndex c (snd x) of
+    Just n -> [((fst x), n + 1)]
+    Nothing -> reverseTaps (DaPhone xs) c
+
+fingerTaps::[(Digit, Presses)] -> Presses
+fingerTaps = foldr ((+).snd) 0
+
+messageToTaps::String -> [(Digit, Presses)]
+messageToTaps = concat.map (reverseTaps sample) 
+
+countTaps::String -> Presses
+countTaps = fingerTaps.messageToTaps
+
+countLength =  length.(takeWhile (=='a'))
+
+convoTaps = map countTaps convo
