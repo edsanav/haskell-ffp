@@ -59,6 +59,24 @@ messageToTaps = concat.map (reverseTaps sample)
 countTaps::String -> Presses
 countTaps = fingerTaps.messageToTaps
 
+
+data BinaryTree a = Leaf | Node (BinaryTree a) a (BinaryTree a)
+  deriving (Eq, Ord, Show)
+
+insert' :: (Ord a, Num b) => (a,b) -> BinaryTree (a, b) -> BinaryTree (a, b)
+insert' x Leaf = Node Leaf x Leaf
+insert' x@(c,d) (Node left y@(a,b) right)
+  | c == a = Node left (a, b+d)  right
+  | c < a = Node (insert' x left) y right
+  | c > a = Node left y (insert' x right)
+
+foldrTree::(a -> b -> b) -> b -> BinaryTree a -> b
+foldrTree _ acc Leaf = acc
+foldrTree f acc (Node left a right) = f a (foldrTree f (foldrTree f acc left) right)
+
+toTree::String -> BinaryTree (Char, Int)
+toTree s = foldr insert' Leaf $ zip s (repeat 1)
+
 countLength =  length.(takeWhile (=='a'))
 
 convoTaps = map countTaps convo
