@@ -67,7 +67,14 @@ instance Foldable BinaryTree where
   foldr _ z Leaf = z
   foldr  f acc (Node left a right) = foldr f (f a (foldr f acc right)) left
   
-
+-- Don't do this at home. Use new types. Just for convencience here
+-- Maybe not needed if we use Maybe's ?
+instance Semigroup Char where
+  (<>) c1 c2 = max c1 c2
+ 
+instance Monoid Char where
+  mempty = '!'
+  
 insert' :: (Ord a, Num b) => (a,b) -> BinaryTree (a, b) -> BinaryTree (a, b)
 insert' x Leaf = Node Leaf x Leaf
 insert' x@(c,d) (Node left y@(a,b) right)
@@ -84,10 +91,24 @@ mostPopular Leaf = Nothing
 mostPopular tree = Just(fst $ foldr maxBySnd (mempty, 0) tree)
   where maxBySnd (a,x) (b,y) = if (x>y) then (a,x) else (b,y)
   
--- Don't do this at home. Use new types. Just for convencience here
-instance Semigroup Char where
-  (<>) c1 c2 = max c1 c2
- 
-instance Monoid Char where
-  mempty = '!'
-  
+mostPopularItem::(Monoid a, Ord a) => [a] -> Maybe a
+mostPopularItem = mostPopular.toTree
+
+-- More explicitly would be
+--mostPopularLetter::String -> Maybe Char
+--mostPopularLetter = mostPopular.toTree
+--
+--mostPopularWord::[String] -> Maybe String
+--mostPopularWord = mostPopular.toTree 
+
+-- Interesting
+-- https://stackoverflow.com/questions/13426417/how-do-i-re-write-a-haskell-function-of-two-argument-to-point-free-style
+cost::DaPhone -> Char -> Int
+cost phone c = sum.(map snd) $ reverseTaps phone c 
+
+coolestWord::[String] -> Maybe String
+coolestWord  = mostPopularItem.concat.(map words) 
+
+coolestLtr::[String] -> Maybe Char
+coolestLtr  = mostPopularItem.concat
+
