@@ -67,14 +67,6 @@ instance Foldable BinaryTree where
   foldr _ z Leaf = z
   foldr  f acc (Node left a right) = foldr f (f a (foldr f acc right)) left
   
--- Don't do this at home. Use new types. Just for convencience here
--- Maybe not needed if we use Maybe's ?
-instance Semigroup Char where
-  (<>) c1 c2 = max c1 c2
- 
-instance Monoid Char where
-  mempty = '!'
-  
 insert' :: (Ord a, Num b) => (a,b) -> BinaryTree (a, b) -> BinaryTree (a, b)
 insert' x Leaf = Node Leaf x Leaf
 insert' x@(c,d) (Node left y@(a,b) right)
@@ -86,12 +78,16 @@ insert' x@(c,d) (Node left y@(a,b) right)
 toTree::(Ord a) => [a] -> BinaryTree (a, Int)
 toTree s = foldr insert' Leaf $ zip s (repeat 1)
 
-mostPopular::(Monoid a)=> BinaryTree (a, Int) -> Maybe a
+ 
+mostPopular:: BinaryTree (a, Int) -> Maybe a
 mostPopular Leaf = Nothing
-mostPopular tree = Just(fst $ foldr maxBySnd (mempty, 0) tree)
-  where maxBySnd (a,x) (b,y) = if (x>y) then (a,x) else (b,y)
+mostPopular tree = result $ foldr maxBySnd Nothing tree
+  where maxBySnd (a,x) Nothing = Just (a,x)
+        maxBySnd (a,x) (Just (b,y)) = if (x>y) then Just(a,x) else Just(b,y)
+        result Nothing = Nothing
+        result (Just (a,_)) = Just(a)
   
-mostPopularItem::(Monoid a, Ord a) => [a] -> Maybe a
+mostPopularItem::(Ord a) => [a] -> Maybe a
 mostPopularItem = mostPopular.toTree
 
 -- More explicitly would be
