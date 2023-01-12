@@ -39,3 +39,16 @@ mkWord myS
   | otherwise = Nothing
   where compareParts (x,y) = length x > length y
         
+data Nat = Zero | Succ Nat deriving (Eq, Show)
+
+natToInteger :: Nat -> Integer
+natToInteger Zero = 0
+natToInteger (Succ n) = 1+ natToInteger(n)
+
+integerToNat :: Integer -> Maybe Nat
+integerToNat 0 = Just Zero
+integerToNat n | n < 0 = Nothing
+integerToNat n = Just (nextStep n)
+  where nextStep 0 = Zero
+        nextStep x = Succ (nextStep (x-1))
+
