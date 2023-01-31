@@ -9,17 +9,21 @@ import System.Exit (exitSuccess) -- [5]
 import System.IO (BufferMode (NoBuffering), hSetBuffering, stdout) -- [6]
 import System.Random (randomRIO) -- [7]
 
-type WordList = [String]
+-- type WordList = [String]
+newtype WordList = WordList [String] deriving (Eq, Show)
 
-data Puzzle = Puzzle String [Maybe Char] [Char]
+
+data Puzzle = Puzzle String [Maybe Char] [Char] Int
 
 instance Show Puzzle where
-  show (Puzzle _ discovered guessed) =
+  show (Puzzle _ discovered guessed strikes) =
     ( intersperse ' ' $
         fmap renderPuzzleChar discovered
     )
       ++ " Guessed so far: "
       ++ guessed
+      ++ " \nRemaining lives: "
+      ++ show (maxStrikes - strikes)
 
 minWordLength :: Int
 minWordLength = 5
@@ -27,22 +31,25 @@ minWordLength = 5
 maxWordLength :: Int
 maxWordLength = 9
 
+maxStrikes::Int
+maxStrikes = 7
+
 allWords :: IO WordList
 allWords = do
   dict <- readFile "data/dict.txt"
-  return (lines dict)
+  return $ WordList (lines dict)
 
 gameWords :: IO WordList
 gameWords = do
-  aw <- allWords
-  return (filter gameLength aw)
+  WordList aw <- allWords
+  return $ WordList (filter gameLength aw)
   where
     gameLength w =
       let l = length (w :: String)
        in l >= minWordLength && l <= maxWordLength
 
 randomWord :: WordList -> IO String
-randomWord wl = do
+randomWord (WordList wl) = do
   randomIndex <- randomRIO (0, l)
   return $ wl !! randomIndex
   where
@@ -52,26 +59,30 @@ randomWord' :: IO String
 randomWord' = gameWords >>= randomWord
 
 freshPuzzle :: String -> Puzzle
-freshPuzzle w = Puzzle w (map (const Nothing) w) []
+freshPuzzle w = Puzzle w (map (const Nothing) w) [] 0
 
 charInWord :: Puzzle -> Char -> Bool
-charInWord (Puzzle w _ _) c = elem (toLower c) w
+charInWord (Puzzle w _ _ _) c = elem (toLower c) w
 
 alreadyGuessed :: Puzzle -> Char -> Bool
-alreadyGuessed (Puzzle _ _ g) c = elem c g
+alreadyGuessed (Puzzle _ _ g _) c = elem c g
 
 renderPuzzleChar :: Maybe Char -> Char
 renderPuzzleChar Nothing = '_'
 renderPuzzleChar (Just c) = c
 
 fillInCharacter :: Puzzle -> Char -> Puzzle
-fillInCharacter (Puzzle word filledInSoFar s) c = (Puzzle word newFilledInSoFar (c : s))
+fillInCharacter (Puzzle word filledInSoFar s strikes) c = (Puzzle word newFilledInSoFar (c : s) newStrikes)
   where
     zipper guessed wordChar guessChar =
       if wordChar == guessed
         then Just wordChar
         else guessChar
     newFilledInSoFar = zipWith (zipper c) word filledInSoFar
+    newStrikes =
+      if filledInSoFar == newFilledInSoFar
+        then strikes + 1
+        else strikes
 
 handleGuess :: Puzzle -> Char -> IO Puzzle
 handleGuess puzzle guess = do
@@ -98,15 +109,15 @@ handleGuess puzzle guess = do
       return (fillInCharacter puzzle guess)
 
 gameOver :: Puzzle -> IO ()
-gameOver (Puzzle wordToGuess _ guessed) =
-  if (length guessed) > 7 then
+gameOver (Puzzle wordToGuess _ guessed strikes) =
+  if strikes == maxStrikes then
     do putStrLn "You lose!"
        putStrLn $ "The word was "++ wordToGuess
        exitSuccess
   else return ()
 
 gameWin :: Puzzle -> IO ()
-gameWin (Puzzle _ filledInSoFar _) =
+gameWin (Puzzle _ filledInSoFar _ _) =
   if all isJust filledInSoFar then
     do putStrLn "You win!"
        exitSuccess
