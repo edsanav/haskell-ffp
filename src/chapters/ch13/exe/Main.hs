@@ -1,5 +1,8 @@
 module Main where
 
+import Palindrome (palindrome)
+import Person (gimmePerson)
+
 import Hello
 import DogsRule
 import Scratch
@@ -13,3 +16,14 @@ main = do
   sayHello name
   dogs
   twooPrint
+
+
+mainPal::IO()
+mainPal = do
+   hSetBuffering stdout NoBuffering -- If removed, it doesn't print what written
+   palindrome
+
+mainPerson::IO()
+mainPerson = do
+   hSetBuffering stdout NoBuffering -- If removed, it doesn't print what written
+   gimmePerson
