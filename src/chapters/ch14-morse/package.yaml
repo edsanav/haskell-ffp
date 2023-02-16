@@ -21,6 +21,8 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- containers
+- QuickCheck
 
 ghc-options:
 - -Wall
@@ -49,11 +51,12 @@ executables:
 
 tests:
   ch14-morse-test:
-    main:                Spec.hs
+    main:                Tests.hs
     source-dirs:         test
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -main-is Tests.mainT
     dependencies:
     - ch14-morse

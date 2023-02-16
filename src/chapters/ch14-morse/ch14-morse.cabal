@@ -32,9 +32,9 @@ library
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
-      base >=4.7 && <5
-      , containers
-      , QuickCheck
+      QuickCheck
+    , base >=4.7 && <5
+    , containers
   default-language: Haskell2010
 
 executable ch14-morse-exe
@@ -45,23 +45,23 @@ executable ch14-morse-exe
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      QuickCheck
+    , base >=4.7 && <5
     , ch14-morse
     , containers
-    , QuickCheck
   default-language: Haskell2010
 
 test-suite ch14-morse-test
   type: exitcode-stdio-1.0
-  main-is: Spec.hs
+  main-is: Tests.hs
   other-modules:
       Paths_ch14_morse
   hs-source-dirs:
       test
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N -main-is Tests.mainT
   build-depends:
-      base >=4.7 && <5
+      QuickCheck
+    , base >=4.7 && <5
     , ch14-morse
     , containers
-    , QuickCheck
   default-language: Haskell2010
