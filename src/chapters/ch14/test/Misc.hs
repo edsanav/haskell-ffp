@@ -65,6 +65,33 @@ prop_foldr1 xs ys = ((foldr (:) ys xs)) == ((++) xs ys)
 prop_foldr2:: (Eq a) => [[a]] -> Bool
 prop_foldr2 xs = ((foldr (++) [] xs)) == concat xs
 
+prop_length:: Int -> [b] ->  Bool
+prop_length n xs = length (take n xs) == n
+
+-- for example, generator of ints: arbitrary::Gen Int
+myGen:: Gen (Int, [Int])
+myGen = do
+  n <- (arbitrary::Gen Int) `suchThat` (>0)
+  xs <- suchThat (arbitrary::Gen [Int]) (\x -> length x > n)
+  return (n, xs)
+
+prop_lengthGood :: Property
+prop_lengthGood = forAll myGen
+  (\(n,xs) -> length (take n xs) == n)
+
+prop_Read::(Num a, Show a, Eq a, Read a) => a -> Bool
+prop_Read x = (read (show x)) == x
+
+square::(Num a) => a -> a
+square x = x * x
+
+squareIdentity::(Floating a) => a -> a
+squareIdentity = square . sqrt
+
+prop_sqri :: (Eq a, Floating a) => a -> Bool
+prop_sqri x = squareIdentity x == x
+
+
 main :: IO ()
 main = do
   quickCheck (prop_half::Float -> Bool)
@@ -86,4 +113,7 @@ main = do
   quickCheck (prop_FComp::Fun Char Int -> Fun Int String -> Char -> Bool)
   quickCheck (prop_foldr1::String -> String -> Bool)
   quickCheck (prop_foldr2::[String] -> Bool)
-
+--  quickCheck (prop_length::Int -> [Char]-> Bool)
+  quickCheck prop_lengthGood
+  quickCheck (prop_Read::Rational -> Bool)
+--  quickCheck (prop_sqri::Float -> Bool)
