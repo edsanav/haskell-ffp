@@ -54,3 +54,15 @@ executable person
   build-depends:       base >= 4.7 && < 5
                      , hello
   ghc-options:        -main-is Main.mainPerson
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N -main-is Test.main
+  build-depends:
+      QuickCheck
+    , hello
+    , base >=4.7 && <5
+  default-language: Haskell2010

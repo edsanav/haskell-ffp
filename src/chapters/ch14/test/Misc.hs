@@ -1,6 +1,7 @@
 module Misc where
 import Test.QuickCheck
 import Data.List (sort)
+import Data.Char
 
 half::(Fractional a) => a -> a
 half x = x / 2
@@ -92,6 +93,34 @@ prop_sqri :: (Eq a, Floating a) => a -> Bool
 prop_sqri x = squareIdentity x == x
 
 
+twice :: (a -> a) -> a -> a
+twice f = f . f
+
+fourTimes :: (a -> a) -> a -> a
+fourTimes = twice.twice
+
+capitalizeWord::String -> String
+capitalizeWord = map toUpper
+
+prop_idemF::String -> Bool
+prop_idemF x = capitalizeWord x == twice capitalizeWord x && (capitalizeWord x == fourTimes capitalizeWord x)
+
+prop_idemF2 :: Ord a => [a] -> Bool
+prop_idemF2 x = (sort x == twice sort x) && (sort x == fourTimes sort x)
+
+data Fool = Fulse | Frue deriving (Eq, Show)
+
+foolGen::Gen Fool
+foolGen = elements [Fulse, Frue]
+
+instance Arbitrary Fool where
+  arbitrary = foolGen
+ 
+data SFool = SFulse | SFrue deriving (Eq, Show)
+
+sFoolGen::Gen SFool
+sFoolGen = frequency [(2, return SFulse), (1, return  SFrue)]
+
 main :: IO ()
 main = do
   quickCheck (prop_half::Float -> Bool)
@@ -117,3 +146,5 @@ main = do
   quickCheck prop_lengthGood
   quickCheck (prop_Read::Rational -> Bool)
 --  quickCheck (prop_sqri::Float -> Bool)
+  quickCheck prop_idemF
+  quickCheck (prop_idemF2::[Int] -> Bool)
