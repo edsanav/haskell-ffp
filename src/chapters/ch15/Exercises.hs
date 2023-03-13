@@ -60,17 +60,21 @@ instance Arbitrary BoolDisj where
 data Or a b = Fst a | Snd b deriving (Eq, Show)
 
 instance (Semigroup a, Semigroup b) => Semigroup (Or a b) where
-  (<>) (Snd a) _  = (Snd a)
-  (<>) (Fst _) (Snd b) = (Snd b)
-  (<>) (Fst _) (Fst b) = (Fst b)
+  (<>) (Snd a) _  = Snd a
+  (<>) (Fst _) (Snd b) = Snd b
+  (<>) (Fst _) (Fst b) = Fst b
 
 instance (Arbitrary a, Arbitrary b) => Arbitrary (Or a b) where
  arbitrary =  frequency [(1, Fst <$> arbitrary), (1, Snd <$> arbitrary)]
 
 type OrAssoc a b = Or a b -> Or a b -> Or a b ->  Bool
 
+newtype Combine a b = Combine {uncombine ::a -> b}
 
+instance (Semigroup b) => Semigroup (Combine a b) where
+  (<>) (Combine f) (Combine g) = Combine (f <> g)
 
+    
 main :: IO()
 main = do
   quickCheck (semigroupAssoc :: TrivAssoc)
@@ -78,3 +82,5 @@ main = do
   quickCheck (semigroupAssoc :: TwoAssoc String Ordering)
   quickCheck (semigroupAssoc :: BoolConj -> BoolConj -> BoolConj -> Bool)
   quickCheck (semigroupAssoc :: OrAssoc String Ordering)
+--  Don't know really how to. Maybe do not use semigroupAssoc and do it directly using Fun a b?
+--  quickCheck (semigroupAssoc :: CombineAssoc)
