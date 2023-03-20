@@ -74,7 +74,17 @@ newtype Combine a b = Combine {uncombine ::a -> b}
 instance (Semigroup b) => Semigroup (Combine a b) where
   (<>) (Combine f) (Combine g) = Combine (f <> g)
 
-    
+type CombineAssoc a b = Combine a b -> Combine a b -> Combine a b -> Property
+
+-- Aa copied from https://stackoverflow.com/a/41353825
+funEquality :: (Arbitrary a, Show a, Eq b, Show b) => Combine a b -> Combine a b -> Property
+funEquality (Combine f) (Combine g) = property $ \a -> f a === g a
+
+combineAssoc :: (Arbitrary a, Show a, Eq b, Show b, Semigroup b) => CombineAssoc a b
+combineAssoc f g h = ((f <> g) <> h) `funEquality` (f <> (g <> h))
+--
+type CombineAssocTest = CombineAssoc Int Ordering
+
 main :: IO()
 main = do
   quickCheck (semigroupAssoc :: TrivAssoc)
@@ -82,5 +92,4 @@ main = do
   quickCheck (semigroupAssoc :: TwoAssoc String Ordering)
   quickCheck (semigroupAssoc :: BoolConj -> BoolConj -> BoolConj -> Bool)
   quickCheck (semigroupAssoc :: OrAssoc String Ordering)
---  Don't know really how to. Maybe do not use semigroupAssoc and do it directly using Fun a b?
---  quickCheck (semigroupAssoc :: CombineAssoc)
+  quickCheck $ \(Fn f) (Fn g) (Fn h) -> (combineAssoc :: CombineAssoc Int Ordering) (Combine f) (Combine g) (Combine h)
