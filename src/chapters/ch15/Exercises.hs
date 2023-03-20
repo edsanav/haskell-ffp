@@ -83,7 +83,6 @@ funEquality (Combine f) (Combine g) = property $ \a -> f a === g a
 combineAssoc :: (Arbitrary a, Show a, Eq b, Show b, Semigroup b) => CombineAssoc a b
 combineAssoc f g h = ((f <> g) <> h) `funEquality` (f <> (g <> h))
 --
-type CombineAssocTest = CombineAssoc Int Ordering
 
 main :: IO()
 main = do
