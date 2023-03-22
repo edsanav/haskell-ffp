@@ -91,4 +91,6 @@ main = do
   quickCheck (semigroupAssoc :: TwoAssoc String Ordering)
   quickCheck (semigroupAssoc :: BoolConj -> BoolConj -> BoolConj -> Bool)
   quickCheck (semigroupAssoc :: OrAssoc String Ordering)
+  -- Fn is a modifier for testing function: since it's a modifier you pass it before the propertie
+  -- It is also a pattern, that's the reason of the syntax \(Fn f) (Fn g) (Fn h) ->
   quickCheck $ \(Fn f) (Fn g) (Fn h) -> (combineAssoc :: CombineAssoc Int Ordering) (Combine f) (Combine g) (Combine h)
