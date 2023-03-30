@@ -4,13 +4,13 @@ import Test.QuickCheck
 
 data Trivial = Trivial deriving (Eq, Show)
 
-semigroupAssoc::(Eq m, Semigroup m) => m -> m -> m -> Bool
+semigroupAssoc :: (Eq m, Semigroup m) => m -> m -> m -> Bool
 semigroupAssoc a b c = (a <> (b <> c)) == ((a <> b) <> c)
 
-mli::(Eq m, Monoid m) => m -> Bool
+mli :: (Eq m, Monoid m) => m -> Bool
 mli a = (mempty <> a) == a
 
-mlr::(Eq m, Monoid m) => m -> Bool
+mlr :: (Eq m, Monoid m) => m -> Bool
 mlr a = (a <> mempty) == a
 
 instance Semigroup Trivial where
@@ -26,27 +26,28 @@ type TrivAssoc = Trivial -> Trivial -> Trivial -> Bool
 
 newtype Identity a = Identity a deriving (Eq, Show)
 
-instance  Semigroup a => Semigroup (Identity a) where
-  (<>) (Identity x) (Identity y) =  Identity $ (<>) x y
+instance Semigroup a => Semigroup (Identity a) where
+  (<>) (Identity x) (Identity y) = Identity $ (<>) x y
 
 instance Monoid a => Monoid (Identity a) where
   mempty = Identity mempty
 
 instance Arbitrary a => Arbitrary (Identity a) where
-  arbitrary =  Identity <$> arbitrary
+  arbitrary = Identity <$> arbitrary
 
-type IdenAssoc a = Identity a -> Identity a -> Identity a ->  Bool
+type IdenAssoc a = Identity a -> Identity a -> Identity a -> Bool
 
 data Two a b = Two a b deriving (Eq, Show)
 
-instance  (Semigroup a, Semigroup b) => Semigroup (Two a b) where
- (<>) (Two x y) (Two x' y') =  Two (x <> x') ( y<> y')
- 
+instance (Semigroup a, Semigroup b) => Semigroup (Two a b) where
+  (<>) (Two x y) (Two x' y') = Two (x <> x') (y <> y')
+
 instance (Monoid a, Monoid b) => Monoid (Two a b) where
-  mempty = Two mempty mempty 
+  mempty = Two mempty mempty
 
 instance (Arbitrary a, Arbitrary b) => Arbitrary (Two a b) where
- arbitrary = Two <$> arbitrary  <*> arbitrary
+  arbitrary = Two <$> arbitrary <*> arbitrary
+
 {- above is the same as the following but without syntatic sugar
  arbitryary = do
    a <- arbitrary
@@ -54,24 +55,26 @@ instance (Arbitrary a, Arbitrary b) => Arbitrary (Two a b) where
    return Two a b
 -}
 
-type TwoAssoc a b = Two a b -> Two a b -> Two a b ->  Bool
+type TwoAssoc a b = Two a b -> Two a b -> Two a b -> Bool
 
 newtype BoolConj = BoolConj Bool deriving (Eq, Show)
 
 instance Semigroup BoolConj where
   (<>) (BoolConj a) (BoolConj b) = BoolConj (a && b)
-  
+
 instance Monoid BoolConj where
   mempty = BoolConj True
 
 instance Arbitrary BoolConj where
   arbitrary = elements [BoolConj True, BoolConj False]
 
-
 newtype BoolDisj = BoolDisj Bool deriving (Eq, Show)
 
 instance Semigroup BoolDisj where
-  (<>) (BoolDisj a) (BoolDisj b) = BoolDisj (a || 
+  (<>) (BoolDisj a) (BoolDisj b) = BoolDisj (a || b)
+
+instance Monoid BoolDisj where
+  mempty = BoolDisj False
 
 instance Arbitrary BoolDisj where
   arbitrary = elements [BoolDisj True, BoolDisj False]
@@ -79,19 +82,22 @@ instance Arbitrary BoolDisj where
 data Or a b = Fst a | Snd b deriving (Eq, Show)
 
 instance (Semigroup a, Semigroup b) => Semigroup (Or a b) where
-  (<>) (Snd a) _  = Snd a
+  (<>) (Snd a) _ = Snd a
   (<>) (Fst _) (Snd b) = Snd b
   (<>) (Fst _) (Fst b) = Fst b
 
 instance (Arbitrary a, Arbitrary b) => Arbitrary (Or a b) where
- arbitrary =  frequency [(1, Fst <$> arbitrary), (1, Snd <$> arbitrary)]
+  arbitrary = frequency [(1, Fst <$> arbitrary), (1, Snd <$> arbitrary)]
 
-type OrAssoc a b = Or a b -> Or a b -> Or a b ->  Bool
+type OrAssoc a b = Or a b -> Or a b -> Or a b -> Bool
 
-newtype Combine a b = Combine {uncombine ::a -> b}
+newtype Combine a b = Combine {uncombine :: a -> b}
 
 instance (Semigroup b) => Semigroup (Combine a b) where
   (<>) (Combine f) (Combine g) = Combine (f <> g)
+
+instance (Monoid b) => Monoid (Combine a b) where
+  mempty = Combine mempty
 
 type CombineAssoc a b = Combine a b -> Combine a b -> Combine a b -> Property
 
@@ -101,17 +107,21 @@ funEquality (Combine f) (Combine g) = property $ \a -> f a === g a
 
 combineAssoc :: (Arbitrary a, Show a, Eq b, Show b, Semigroup b) => CombineAssoc a b
 combineAssoc f g h = ((f <> g) <> h) `funEquality` (f <> (g <> h))
+
 --
 
-newtype Comp a = Comp {umComp::a->a}
+newtype Comp a = Comp {umComp :: a -> a}
 
 instance (Semigroup a) => Semigroup (Comp a) where
-  (<>) (Comp f) (Comp g) = Comp (f<>g)
+  (<>) (Comp f) (Comp g) = Comp (f <> g)
 
-compEq :: (Show a, Arbitrary a, Eq a) =>  Comp a -> Comp a -> Property
+instance (Monoid a) => Monoid (Comp a) where
+  mempty = Comp id
+
+compEq :: (Show a, Arbitrary a, Eq a) => Comp a -> Comp a -> Property
 compEq (Comp f) (Comp g) = property $ \x -> f x == g x
 
-compAssoc ::(Arbitrary a, Eq a, Show a, Semigroup a) => Comp a -> Comp a -> Comp a -> Property
+compAssoc :: (Arbitrary a, Eq a, Show a, Semigroup a) => Comp a -> Comp a -> Comp a -> Property
 compAssoc cf cg ch = compEq ((cf <> cg) <> ch) (cf <> (cg <> ch))
 
 data Validation a b = Fail a | Succ b deriving (Eq, Show)
@@ -121,6 +131,21 @@ instance Semigroup a => Semigroup (Validation a b) where
   (<>) (Fail a) (Succ b) = Succ b
   (<>) (Fail a1) (Fail a2) = Fail (a1 <> a2)
 
+newtype Mem s a = Mem
+  { runMem :: s -> (a, s)
+  }
+
+instance Semigroup a => Semigroup (Mem s a) where
+  (<>) (Mem f) (Mem g) = Mem $ \s ->
+    let (a1, s1) = f s
+        (a2, s2) = g s1
+     in (a1 <> a2, s2)
+
+instance Monoid a => Monoid (Mem s a) where
+  mempty = Mem $ \s -> (mempty, s)
+
+f' = Mem $ \s -> ("hi", s + 1)
+
 main = do
   quickCheck (semigroupAssoc :: TrivAssoc)
   quickCheck (semigroupAssoc :: IdenAssoc String)
@@ -129,7 +154,7 @@ main = do
   quickCheck (semigroupAssoc :: OrAssoc String Ordering)
   -- Fn is a modifier for testing function: since it's a modifier you pass it before the propertie
   -- It is also a pattern, that's the reason of the syntax \(Fn f) (Fn g) (Fn h) ->
-  -- https://stackoverflow.com/a/27074021 
+  -- https://stackoverflow.com/a/27074021
   quickCheck $ \(Fn f) (Fn g) (Fn h) -> (combineAssoc :: CombineAssoc Int Ordering) (Combine f) (Combine g) (Combine h)
   quickCheck $ \(Fn f) (Fn g) (Fn h) -> (compAssoc :: Comp Ordering -> Comp Ordering -> Comp Ordering -> Property) (Comp f) (Comp g) (Comp h)
 
@@ -141,11 +166,8 @@ main = do
   quickCheck (mli :: Two String Ordering -> Bool)
   quickCheck (mlr :: Two String Ordering -> Bool)
 
-
-
-
 main2 = do
-  let failure ::String -> Validation String Int
+  let failure :: String -> Validation String Int
       failure = Fail
       success :: Int -> Validation String Int
       success = Succ
@@ -153,3 +175,13 @@ main2 = do
   print $ failure "woot" <> failure "blah"
   print $ success 1 <> success 2
   print $ failure "woot" <> success 2
+
+main3 = do
+  let rmzero = runMem mempty 0
+      rmleft = runMem (f' <> mempty) 0
+      rmright = runMem (mempty <> f') 0
+  print $ rmleft
+  print $ rmright
+  print $ (rmzero :: (String, Int))
+  print $ rmleft == runMem f' 0
+  print $ rmright == runMem f' 0
