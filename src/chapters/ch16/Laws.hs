@@ -13,15 +13,15 @@ functorIdentity f1 = fmap id f1 == id f1
 functorCompose::(Eq (f c), Functor f)  => (a ->b ) -> (b -> c) -> f a -> Bool
 functorCompose f g x = (fmap (g . f) x) == (fmap g (fmap f x))
 
+functorCompose'::(Eq (f c), Functor f)  => (Functor f, Eq (f c)) => Fun a b -> Fun b c -> f a -> Bool
+functorCompose' (Fun _ f) (Fun _ g) x = functorCompose f g x
+
 {-
 review this
 https://github.com/yamad/haskellbook-hpfp/blob/master/Ex16.hs
 
-functorCompose'
-  :: (Eq (f c), Functor f)
-  => f a -> Fun a b -> Fun b c -> Bool
-functorCompose' x (Fun _ f) (Fun _ g) =
-  (fmap (g . f) x) == (fmap g . fmap f $ x)
+functorCompose':: (Eq (f c), Functor f) => f a -> Fun a b -> Fun b c -> Bool
+functorCompose' x (Fun _ f) (Fun _ g) = (fmap (g . f) x) == (fmap g . fmap f $ x)
 -}
 
 
@@ -40,6 +40,7 @@ test2 :: (Int -> String) -> (String -> Bool) -> Identity Int -> Bool
 test2 = functorCompose
 
 
+
 {-
 1. newtype Identity a = Identity a
 2. data Pair a = Pair a a
@@ -55,5 +56,5 @@ data Trivial = Trivial
 runTest = do
   quickCheck test1
   quickCheck (functorIdentity:: Identity Int -> Bool)
---  quickCheck (functorCompose':: IdentityFC)
+  quickCheck (functorCompose'::Fun Int Int -> Fun Int Int -> Identity Int -> Bool)
 --  quickCheck $ \(Fn f) (Fn g) x -> functorCompose:: 
