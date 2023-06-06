@@ -41,6 +41,8 @@ data Pair a = Pair a a deriving (Eq, Show)
 instance Arbitrary a => Arbitrary (Pair a) where
   arbitrary = Pair <$> arbitrary <*> arbitrary
 
+-- consider anything except last parameter as part of the type (so f applies to the last type paramter)
+
 instance Functor Pair where
   fmap f (Pair x y) = Pair (f x) (f y)
   
@@ -85,6 +87,26 @@ instance (Arbitrary a, Arbitrary b) => Arbitrary (Four' a b) where
 instance Functor (Four' a) where
   fmap f (Four' a b c d) = Four' a b c (f d)
 
+
+data Possibly a = LolNope | Yeppers a deriving (Eq, Show)
+
+instance Functor Possibly where
+  fmap _ LolNope = LolNope
+  fmap f (Yeppers a) = Yeppers (f a) 
+
+instance (Arbitrary a ) => Arbitrary (Possibly a) where
+  arbitrary = frequency [(1, return LolNope), (1, Yeppers <$> arbitrary)]
+  
+data Sum a b = First a | Second b deriving (Eq, Show)
+
+instance Functor (Sum a) where
+  fmap _ (First a) = First a
+  fmap f (Second b) = Second (f b)
+ 
+instance (Arbitrary a, Arbitrary b ) => Arbitrary (Sum a b) where
+  arbitrary = frequency [(1, First <$> arbitrary), (1, Second <$> arbitrary)]
+
+
 {-
 1. newtype Identity a = Identity a
 2. data Pair a = Pair a a
@@ -113,4 +135,8 @@ runTest = do
   quickCheck (functorCompose':: Fun Ordering Int -> Fun Int Int -> Four String Int Bool Ordering -> Bool)
   quickCheck (functorIdentity:: Four' String Int -> Bool)
   quickCheck (functorCompose':: Fun Ordering Int -> Fun Int Int -> Four' String Ordering -> Bool)
+  quickCheck (functorIdentity:: Possibly Int -> Bool)
+  quickCheck (functorCompose':: Fun Int String -> Fun String Int -> Possibly Int -> Bool )
+  quickCheck (functorIdentity:: Sum Int Ordering -> Bool)
+  quickCheck (functorCompose':: Fun Ordering Int -> Fun Int String -> Sum Int Ordering -> Bool )
 --  quickCheck $ \(Fn f) (Fn g) x -> functorCompose:: 
