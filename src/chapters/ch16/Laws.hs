@@ -1,3 +1,6 @@
+{-# LANGUAGE FlexibleInstances #-}
+-- this above is for the Flip f a b
+
 module Laws where
 
 import Test.QuickCheck
@@ -106,6 +109,53 @@ instance Functor (Sum a) where
 instance (Arbitrary a, Arbitrary b ) => Arbitrary (Sum a b) where
   arbitrary = frequency [(1, First <$> arbitrary), (1, Second <$> arbitrary)]
 
+data Quant a b = Finance | Desk a | Bloor b deriving (Show, Eq)
+
+instance Functor (Quant a) where 
+  fmap _ Finance = Finance
+  fmap _ (Desk a) = Desk a
+  fmap f (Bloor b) = Bloor (f b) 
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (Quant a b) where
+  arbitrary = frequency [(1, return Finance), (1, Desk <$> arbitrary), (1, Bloor <$> arbitrary)]
+
+data K a b = K a deriving (Eq, Show)
+
+instance Functor (K a) where
+  fmap _ (K a) = K a
+
+instance (Arbitrary a) => Arbitrary (K a b) where
+  arbitrary = K <$> arbitrary
+  
+data Flip f a b = Flip (f a b) deriving (Eq, Show)
+
+instance Functor (Flip K a) where 
+  fmap _ (Flip (K a)) = Flip $ K a 
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (Flip K a b) where
+  arbitrary = do
+    x <- arbitrary
+    return (Flip $ K x)
+    
+newtype EvilGoateeConst a b = GoatyConst b deriving (Eq, Show)
+
+instance Functor (EvilGoateeConst a) where
+  fmap f (GoatyConst b) = GoatyConst (f b)
+  
+instance (Arbitrary b) => Arbitrary (EvilGoateeConst a b) where
+  arbitrary = GoatyConst <$> arbitrary
+
+newtype LiftItOut f a = LiftItOut (f a) deriving (Eq, Show)
+
+instance (Functor f') => Functor (LiftItOut f') where
+  fmap f (LiftItOut ga) =  LiftItOut (fmap f ga)
+
+-- This doesn't work
+--instance (Arbitrary a) => Arbitrary (LiftItOut f a) where
+--  arbitrary = do
+--    x <- arbitrary
+--    Fun g _ <- arbitrary::(Gen (Fun a Int))
+--    return (LiftItOut (g x))
 
 {-
 1. newtype Identity a = Identity a
@@ -139,4 +189,12 @@ runTest = do
   quickCheck (functorCompose':: Fun Int String -> Fun String Int -> Possibly Int -> Bool )
   quickCheck (functorIdentity:: Sum Int Ordering -> Bool)
   quickCheck (functorCompose':: Fun Ordering Int -> Fun Int String -> Sum Int Ordering -> Bool )
+  quickCheck (functorIdentity:: Quant Int Ordering -> Bool)
+  quickCheck (functorCompose':: Fun Int String -> Fun String Ordering -> Quant Bool Int -> Bool )
+  quickCheck (functorIdentity:: K Int Ordering -> Bool)
+  quickCheck (functorCompose':: Fun Int String -> Fun String Ordering -> K Bool Int -> Bool )
+  quickCheck (functorIdentity:: Flip K Int Ordering -> Bool)
+  quickCheck (functorCompose':: Fun Int String -> Fun String Ordering -> Flip K Bool Int -> Bool )
+  quickCheck (functorIdentity:: EvilGoateeConst String Ordering-> Bool)
+  quickCheck (functorCompose':: Fun Ordering Int -> Fun Int Int -> EvilGoateeConst Bool Ordering -> Bool)
 --  quickCheck $ \(Fn f) (Fn g) x -> functorCompose:: 
