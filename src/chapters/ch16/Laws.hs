@@ -117,7 +117,7 @@ instance Functor (Quant a) where
   fmap f (Bloor b) = Bloor (f b) 
 
 instance (Arbitrary a, Arbitrary b) => Arbitrary (Quant a b) where
-  arbitrary = frequency [(1, return Finance), (1, Desk <$> arbitrary), (1, Bloor <$> arbitrary)]
+  arbitrary = oneof [return Finance, Desk <$> arbitrary, Bloor <$> arbitrary]
 
 data K a b = K a deriving (Eq, Show)
 
@@ -147,15 +147,47 @@ instance (Arbitrary b) => Arbitrary (EvilGoateeConst a b) where
 
 newtype LiftItOut f a = LiftItOut (f a) deriving (Eq, Show)
 
+-- no quicktested
 instance (Functor f') => Functor (LiftItOut f') where
   fmap f (LiftItOut ga) =  LiftItOut (fmap f ga)
 
--- This doesn't work
---instance (Arbitrary a) => Arbitrary (LiftItOut f a) where
---  arbitrary = do
---    x <- arbitrary
---    Fun g _ <- arbitrary::(Gen (Fun a Int))
---    return (LiftItOut (g x))
+data Parappa f g a = DaWrappa (f a) (g a) deriving (Eq, Show)
+
+instance (Functor f', Functor g') => Functor (Parappa f' g') where
+  fmap f (DaWrappa ga ha) = DaWrappa (fmap f ga) (fmap f ha)
+
+-- https://begriffs.com/posts/2017-01-14-design-use-quickcheck.html
+
+data IgnoreOne f g a b = IgnoringSomething (f a) (g b) deriving (Eq, Show)
+
+instance (Functor g') => Functor (IgnoreOne f' g' a) where
+  fmap f (IgnoringSomething fa gb) = IgnoringSomething fa (fmap f gb)
+
+data Notorious g o a t = Notorious (g o) (g a) (g t) deriving (Eq, Show)
+
+instance Functor g' => Functor (Notorious g' o a) where
+  fmap f (Notorious go ga gt) = Notorious go ga (fmap f gt)
+
+data List a = Nil | Cons a (List a) deriving (Eq, Show)
+
+instance Functor List where
+  fmap _ Nil = Nil
+  fmap f (Cons a xs) = Cons (f a) (fmap f xs)
+  
+data GoatLord a = NoGoat | OneGoat a | MoreGoats (GoatLord a) (GoatLord a) (GoatLord a) deriving (Show, Eq)
+
+instance Functor GoatLord where
+  fmap _ NoGoat = NoGoat
+  fmap f (OneGoat a) = OneGoat (f a)
+  fmap f (MoreGoats gla1 gla2 gla3) = MoreGoats (fmap f gla1) (fmap f gla2) (fmap f gla3)
+
+data TalkToMe a = Halt | Print String a | Read (String -> a) 
+
+instance Functor TalkToMe where
+  fmap _ Halt = Halt
+  fmap f (Print s a) = Print s (f a) 
+  fmap f (Read g') = Read (f . g')
+  
 
 {-
 1. newtype Identity a = Identity a
