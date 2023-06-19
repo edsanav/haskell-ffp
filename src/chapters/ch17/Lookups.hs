@@ -1,7 +1,20 @@
 module Lookups where
 import Control.Applicative
 import Data.List (elemIndex)
-  
+
+-- Apply is like a functor combined with a semigroup
+-- [(+1), (*2)] <*> [2, 4]
+-- [ (+1) 2 , (+1) 4 , (*2) 2 , (*2) 4 ]
+-- [3,5,4,8]
+
+-- Other example, first with a functor over the tuple function 
+--(,) <$> [1, 2] <*> [3, 4]
+--[(1, ), (2, )] <*> [3, 4]
+--[(1,3),(1,4),(2,3),(2,4)]
+-- or--
+--liftA2 (,) [1, 2] [3, 4]
+--[(1,3),(1,4),(2,3),(2,4)]
+
 added::Maybe Integer
 added = (+3) <$> lookup 3 (zip [1,2,3] [4,5,6])
 
