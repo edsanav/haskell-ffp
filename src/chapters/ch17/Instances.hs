@@ -1,5 +1,5 @@
 module Instances where
-  
+
 -- Interesting explanation: https://www.reddit.com/r/haskell/comments/9jfq7w/relationship_between_applicative_and_monoid_in/e6rv56x/
 
 newtype Identity a = Identity a deriving (Eq, Ord, Show)
