@@ -52,7 +52,65 @@ instance (Arbitrary b, Arbitrary a) => Arbitrary (BahEither b a) where
 instance (Eq b, Eq a) => EqProp (BahEither b a) where
   (=-=) = eq
 
+newtype Identity a = Identity a deriving (Eq, Show)
 
+instance Functor Identity where
+  fmap f (Identity a) = Identity (f a)
+
+instance Applicative (Identity) where
+  pure = Identity
+  (<*>) (Identity f) (Identity a) = Identity (f a)
+
+instance Monad Identity where
+  return = pure
+  (>>=) (Identity a) ffa = ffa a
+
+instance (Arbitrary a ) => Arbitrary (Identity a) where
+  arbitrary = Identity <$> arbitrary
+
+instance (Eq a) => EqProp (Identity a) where
+  (=-=) = eq
+
+
+data List a = Nil | Cons a (List a)  deriving (Eq, Show)
+
+instance Functor List where
+  fmap _  Nil = Nil
+  fmap f (Cons a xs) = Cons (f a) (fmap f xs)
+  
+instance Applicative (List) where
+  pure x = Cons x Nil
+  (<*>) Nil Nil = Nil
+  (<*>) Nil _ = Nil
+  (<*>) _ Nil = Nil
+  (<*>) (Cons f xsf) fa@(Cons a xs) = Cons (f a) (fmap f xs) `append` (xsf <*> fa)
+
+instance Monad (List) where
+  return = pure
+  (>>=) Nil _ = Nil
+  (>>=) (Cons a xs) f = f a `append` (xs >>= f)  
+
+append :: List a -> List a -> List a
+append Nil ys = ys
+append (Cons x xs) ys =
+  Cons x $ xs `append` ys
+
+    
+instance (Arbitrary a ) => Arbitrary (List a) where
+  arbitrary = do 
+     a <- arbitrary
+     b <- arbitrary
+     elements [Nil, Cons a b]
+-- same as:
+--instance (Arbitrary a ) => Arbitrary (List a) where
+--  arbitrary = oneof [pure Nil, Cons <$> arbitrary <*> arbitrary ]
+
+instance (Eq a) => EqProp (List a) where
+  (=-=) = eq
+
+  
 
 main = do
   quickBatch $ monad (undefined:: Nope (Int, String, Int))
+  quickBatch $ monad (undefined:: Identity (Int, String, Int))
+  quickBatch $ monad (undefined:: List (Int, String, Int))
