@@ -3,6 +3,7 @@ module Exercises where
 import Test.QuickCheck
 import Test.QuickCheck.Checkers
 import Test.QuickCheck.Classes
+import Control.Monad (join, liftM2, ap, mapM)
 
 
 data Nope a = NopeDotJpg deriving (Eq, Show)
@@ -108,7 +109,46 @@ instance (Arbitrary a ) => Arbitrary (List a) where
 instance (Eq a) => EqProp (List a) where
   (=-=) = eq
 
+-- joing it's like j x = x >> id
+j :: Monad m => m (m a) -> m a
+j  = join
+
+l1 :: Monad m => (a -> b) -> m a -> m b
+l1 f m = m >>= (return . f)
+
+l2 :: Monad m => (a -> b -> c) -> m a -> m b -> m c
+l2 f ma mb = do
+  a <- ma
+  b <- mb
+  return (f a b)
   
+l2' :: Monad m => (a -> b -> c) -> m a -> m b -> m c
+l2' = liftM2 
+
+a :: Monad m => m a -> m (a -> b) -> m b
+a m mf = do 
+  x <- m
+  f <- mf
+  return (f x)
+ 
+a' :: Monad m => m a -> m (a -> b) -> m b
+a' = flip ap
+
+meh :: Monad m => [a] -> (a -> m b) -> m [b]
+meh [] _ = return []
+--meh' (x:xs) f = f x >>= \b -> meh xs f >>= \bs -> return $ b : bs
+meh (x:xs) f = do
+  b <- f x
+  bs <- meh xs f
+  return (b:bs)
+
+-- un traverse como un castillo
+meh' :: Monad m => [a] -> (a -> m b) -> m [b]
+meh' xs f = mapM f xs
+
+flipType :: (Monad m) => [m a] -> m [a]
+flipType = flip meh id
+
 
 main = do
   quickBatch $ monad (undefined:: Nope (Int, String, Int))
