@@ -90,10 +90,93 @@ instance Traversable List where
   -- Cons <$> f x has type f (List b -> List b) thats why we combine with "traverse f xs" through <*>  
   traverse f (Cons x xs) = Cons <$> f x <*> traverse f xs
   
+-------------------------------------------------------------------------------
+
+data Three a b c = Three a b c deriving (Show, Eq, Ord)
+
+instance (Arbitrary a, Arbitrary b, Arbitrary c) => Arbitrary (Three a b c) where
+  arbitrary = Three <$> arbitrary <*> arbitrary <*> arbitrary
+
+instance (Eq a, Eq b, Eq c) => EqProp (Three a b c) where
+  (=-=) = eq
+
+instance Functor (Three a b) where
+  fmap f (Three a b c) = Three a b (f c)
+
+instance Foldable (Three a b ) where
+  foldMap f (Three _ _ c) = f c
+
+instance Traversable (Three a b) where
+  traverse f (Three a b c) = Three a b <$> f c
+  
+---------------------------------------------------------------------------------
+
+data Pair a b = Pair a b deriving (Show, Eq, Ord)
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (Pair a b) where
+  arbitrary = Pair <$> arbitrary <*> arbitrary
+
+instance (Eq a, Eq b) => EqProp (Pair a b) where
+  (=-=) = eq
+  
+instance Functor (Pair a) where
+  fmap f (Pair a b) = Pair a (f b)
+
+instance Foldable (Pair a) where
+  foldMap f (Pair _ b) = f b
+
+instance Traversable (Pair a) where
+  traverse f (Pair a b) = Pair a <$> f b
+
+----------------------------------------------------------------------
 
 
+data Big a b = Big a b b deriving (Show, Eq, Ord)
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (Big a b) where
+  arbitrary = Big <$> arbitrary <*> arbitrary <*> arbitrary
+
+instance (Eq a, Eq b) => EqProp (Big a b) where
+  (=-=) = eq
+  
+instance Functor (Big a) where
+  fmap f (Big a b b') = Big a (f b) (f b')
+
+instance Foldable (Big a) where
+  foldMap f (Big _ b b') = f b <> f b'
+
+instance Traversable (Big a) where
+  traverse f (Big a b b') = Big a <$> f b <*> f b'
+
+----------------------------------------------------------------------
+
+data Big' a b = Big' a b b b deriving (Show, Eq, Ord)
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (Big' a b) where
+  arbitrary =  Big' <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
+
+instance (Eq a, Eq b) => EqProp (Big' a b) where
+  (=-=) = eq
+
+instance Functor (Big' a) where
+  fmap f (Big' a b b' b'') = Big' a (f b) (f b') (f b'')
+
+instance Foldable (Big' a) where
+  foldMap f (Big' _ b b' b'') = f b <> f b' <> f b''
+ 
+instance Traversable (Big' a) where
+  traverse f (Big' a b b' b'') = Big' a <$> f b <*> f b' <*> f b''
+  
+ 
+ 
+
+  
+ 
 main = do
   quickBatch $ traversable (undefined:: Identity (Int, Int, [Int]))
   quickBatch $ traversable (undefined:: Constant Int (Int, Int, [Int]))
   quickBatch $ traversable (undefined:: Optional (Int, Int, [Int]))
   quickBatch $ traversable (undefined:: List (Int, Int, [Int]))
+  quickBatch $ traversable (undefined:: Three Int Int (Int, Int, [Int]))
+  quickBatch $ traversable (undefined:: Big Int (Int, Int, [Int]))
+  quickBatch $ traversable (undefined:: Big' Int (Int, Int, [Int]))
