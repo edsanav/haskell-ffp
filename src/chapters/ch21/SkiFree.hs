@@ -4,6 +4,7 @@ module SkiFree where
 
 import Test.QuickCheck
 import Test.QuickCheck.Checkers
+import Test.QuickCheck.Classes
 
 data S n a = S (n a) a deriving (Eq, Show)
 
@@ -25,8 +26,8 @@ instance Foldable n => Foldable (S n) where
   foldMap f (S na a) = foldMap f na <> f a
   
 instance Traversable n => Traversable (S n) where
-  traverse = undefined
+  traverse f (S na a) = S <$> traverse f na <*> f a
 
 
-
-main = sample' (arbitrary :: Gen (S [] Int))
+main = do
+  quickBatch $ traversable (undefined:: S [] (Int , Int, [Int]))
