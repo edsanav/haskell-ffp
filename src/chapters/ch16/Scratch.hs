@@ -1,4 +1,4 @@
-module Scratch where
+module PartiallyApplied where
 
 a = (+1) <$> read "[1]"::[Int]
 

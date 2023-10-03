@@ -1,4 +1,4 @@
-module Scratch where
+module PartiallyApplied where
 
 import Data.Monoid
 import Test.QuickCheck

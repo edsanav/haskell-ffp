@@ -1,4 +1,4 @@
-module Scratch where
+module PartiallyApplied where
 
 data MyIdentity a = MyIdentity a deriving (Show, Eq)
 

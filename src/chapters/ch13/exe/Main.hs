@@ -5,7 +5,7 @@ import Person (gimmePerson)
 
 import Hello
 import DogsRule
-import Scratch
+import PartiallyApplied
 import System.IO
 
 main :: IO()

@@ -1,4 +1,4 @@
-module Scratch (twooPrint) where
+module PartiallyApplied (twooPrint) where
 
 twoo :: IO Bool
 twoo = do

@@ -16,7 +16,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     Hello
                        ,DogsRule
-                       ,Scratch
+                       ,PartiallyApplied
                        ,VigCipher
                        ,Palindrome
                        ,Person
