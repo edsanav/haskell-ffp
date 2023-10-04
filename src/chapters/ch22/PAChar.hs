@@ -20,7 +20,7 @@ Prelude> composed "Julie"
 "EILUJ"
 Prelude> fmapped "Chris"
 "SIRHC"
--}
+-}1
 
 tupled::[Char] -> ([Char],[Char])
 tupled = do

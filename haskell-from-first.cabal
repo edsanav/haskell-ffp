@@ -20,4 +20,5 @@ executable haskell-from-first
   build-depends:       base >= 4.7 && < 5,
                        time,
                        QuickCheck,
-                       checkers
+                       checkers,
+                       mtl
