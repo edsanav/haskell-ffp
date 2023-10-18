@@ -1,6 +1,8 @@
 module ReaderPractice where
 import Control.Applicative
 import Data.Maybe
+import Data.Foldable (fold)
+import Data.Monoid
 
 x = [1, 2, 3]
 y = [4, 5, 6]
@@ -33,11 +35,37 @@ x3 n = (,) <$> z' n <*> z' n
 summed :: Num c => (c, c) -> c
 summed = uncurry (+)
 
+s' :: Maybe Integer
+s' = summed <$> ((,) <$> xs <*> ys)
+
 -- Remember functions are applicatives
 bolt:: Integer -> Bool
 bolt = liftA2 (&&) (>3) (<8)
 
-fromMaybe :: a -> Maybe a -> a
-fromMaybe _ (Just x') = x'
-fromMaybe x' Nothing = x'
+fromMaybe' :: a -> Maybe a -> a
+fromMaybe' _ (Just x') = x'
+fromMaybe' x' Nothing = x'
 
+sequA :: Integral a => a -> [Bool]
+sequA = sequenceA [(>3), (<8), even]
+
+
+
+main:: IO ()
+main = do
+  print $ sequenceA [Just 3, Just 2, Just 1]
+  print $ sequenceA [x, y]
+  print $ sequenceA [xs, ys]
+  print $ summed <$> ((,) <$> xs <*> ys)
+  print $ fmap summed ((,) <$> xs <*> zs)
+  print $ bolt 7
+  print $ fmap bolt z
+  -- the function is the applicative -> [(a->b)] to a->[b]
+  print $ sequenceA [(>3), (<8), even] 7
+  print $ foldMap All (sequA 7) -- equivalent to fold $ fmap All (sequA 7)
+  print $ traverse sequA s'
+  print $ sequA $ fromMaybe 8 s'
+  -- bolt -- Intrgrt -> Bool
+  -- xs -- Maybe Integer
+  print $ (bolt.fromMaybe 8) xs
+  print $ fmap bolt (fromMaybe 8) xs
