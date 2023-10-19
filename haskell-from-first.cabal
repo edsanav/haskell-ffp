@@ -21,4 +21,5 @@ executable haskell-from-first
                        time,
                        QuickCheck,
                        checkers,
-                       mtl
+                       mtl,
+                       random
