@@ -10,3 +10,4 @@ b = next(a)
 c = snd b
 
 d = random a:: (Char, StdGen)
+
