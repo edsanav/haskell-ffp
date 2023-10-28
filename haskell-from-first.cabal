@@ -25,4 +25,5 @@ executable haskell-from-first
                        checkers,
                        mtl,
                        random,
-                       transformers
+                       transformers,
+                       dlist

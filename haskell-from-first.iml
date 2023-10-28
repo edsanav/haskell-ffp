@@ -42,5 +42,6 @@
     <orderEntry type="library" name="stm-2.5.0.0" level="project" />
     <orderEntry type="library" name="binary-0.8.6.0" level="project" />
     <orderEntry type="library" name="mtl-2.2.2" level="project" />
+    <orderEntry type="library" name="dlist-0.8.0.6" level="project" />
   </component>
 </module>
