@@ -1,6 +1,6 @@
 {-# LANGUAGE InstanceSigs #-}
 
-module ScratchInstance where
+module Chapters.Ch23.ScratchInstance where
 
 type Iso a b = (a -> b, b -> a)
 
