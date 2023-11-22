@@ -50,3 +50,7 @@ getDog2 = myLiftA2 Dog dogName address
 
 getDog3::Person -> Dog
 getDog3 = Dog <$> dogName <*> address
+
+--ghci> bla = (+) <$> (*3) <*> ((-)3)
+--ghci> :t bla
+-- ((-)3) is 3 - whatever
