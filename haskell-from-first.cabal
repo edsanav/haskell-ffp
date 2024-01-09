@@ -26,4 +26,5 @@ executable haskell-from-first
                        mtl,
                        random,
                        transformers,
-                       dlist
+                       dlist,
+                       trifecta

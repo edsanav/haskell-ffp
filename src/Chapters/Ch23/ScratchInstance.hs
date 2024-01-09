@@ -14,8 +14,8 @@ newtype Moi s a = Moi {runMoi :: s -> (a, s)}
 
 -- :t Moi
 -- Moi :: (s -> (a, s)) -> Moi s a
--- :t runState
--- runState :: Moi s a -> s -> (a, s)
+-- :t runMoi
+-- runMoi :: Moi s a -> s -> (a, s)
 
 instance Functor (Moi s) where
   fmap :: (a -> b) -> Moi s a -> Moi s b
