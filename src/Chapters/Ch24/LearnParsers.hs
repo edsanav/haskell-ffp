@@ -1,6 +1,7 @@
 module Chapters.Ch24.LearnParsers where
 
 import Text.Trifecta
+import Control.Applicative
 
 stop:: Parser a
 stop = unexpected "stop"
@@ -8,11 +9,18 @@ stop = unexpected "stop"
 one :: Parser Char
 one = char '1'
 
+oneEOF:: Parser Char
+oneEOF = char '1' <* eof
+
+
 one' :: Parser b
 one' = one >> stop
 
 oneTwo:: Parser Char
 oneTwo = char '1' >> char '2'
+
+oneTwoEOF:: Parser Char
+oneTwoEOF =  char '1' >> char '2' <* eof
 
 oneTwo':: Parser b
 oneTwo' = oneTwo >> stop
@@ -23,6 +31,9 @@ testParse p =
   
 pNL:: String -> IO ()
 pNL s = putStrLn ('\n' : s)
+
+p123:: Parser String
+p123 = (string "123" <|> string "12" <|> string "1") <* eof
 
 main::IO()
 main = do
@@ -36,3 +47,7 @@ main = do
   testParse oneTwo
   pNL "oneTwo':"
   testParse oneTwo'
+  pNL "oneEOF:"
+  testParse oneEOF
+  pNL "oneTwoEOF:"
+  testParse oneTwoEOF
