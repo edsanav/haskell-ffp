@@ -43,6 +43,18 @@ p123 = (string "123" <|> string "12" <|> string "1") <* eof
 pString::String -> Parser String 
 pString = traverse char
 
+unitSuc::Parser Integer
+unitSuc = do 
+  x <- integer
+  _ <- eof
+  return x
+
+unitSuc'::Parser Integer
+unitSuc' = integer >>= (\x -> eof >> return x)
+
+unitSuc''::Parser Integer
+unitSuc'' = integer <* eof
+
 main::IO()
 main = do
   pNL "stop:"
