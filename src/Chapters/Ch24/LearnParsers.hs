@@ -38,7 +38,7 @@ pNL:: String -> IO ()
 pNL s = putStrLn ('\n' : s)
 
 p123:: Parser String
-p123 = (string "123" <|> string "12" <|> string "1") <* eof
+p123 = (try (string "123") <|> try (string "12") <|> try(string "1")) <* eof
 
 pString::String -> Parser String 
 pString = traverse char

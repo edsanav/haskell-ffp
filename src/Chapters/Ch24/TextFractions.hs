@@ -5,6 +5,7 @@ module Chapters.Ch24.TextFractions where
 import Control.Applicative
 import Data.Ratio ((%))
 import Text.Trifecta
+import Numeric
 
 badFraction :: String
 badFraction = "1/0"
@@ -33,6 +34,10 @@ virtuousFraction = do
   case denominator of
     0 -> fail "Denominator cannot be zero"
     _ -> return (numerator % denominator)
+
+---- Use try because otherwise it will start matching the first option and won't bother wit the second
+fractionOrInt::Parser (Either Rational Integer)
+fractionOrInt = (Left <$> try virtuousFraction) <|> (Right <$> try integer) <* eof
 
 main :: IO ()
 main = do
