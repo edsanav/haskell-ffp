@@ -27,4 +27,10 @@ executable haskell-from-first
                        random,
                        transformers,
                        dlist,
-                       trifecta
+                       trifecta,
+                       containers,
+                       text,
+                       bytestring,
+                       hspec,
+                       parsers,
+                       raw-strings-qq
