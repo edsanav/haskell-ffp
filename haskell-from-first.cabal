@@ -33,4 +33,7 @@ executable haskell-from-first
                        bytestring,
                        hspec,
                        parsers,
-                       raw-strings-qq
+                       raw-strings-qq,
+                       attoparsec,
+                       parsec,
+                       aeson
