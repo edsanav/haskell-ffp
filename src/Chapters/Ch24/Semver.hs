@@ -26,11 +26,7 @@ skipDot::Parser ()
 skipDot = skipMany (char '.')
 
 parsePart::Parser NumberOrString
-parsePart = do
-  res <- (Left <$> integer) <|> (Right <$> some letter)
-  case res of
-    Left i -> return (NOSI i)
-    Right an -> return (NOSS an)
+parsePart = NOSI <$> try (integer <* notFollowedBy letter) <|> NOSS <$> some alphaNum
 
 parseEnding::Parser [NumberOrString]
 parseEnding = some $ parsePart <* skipDot
@@ -50,6 +46,7 @@ main:: IO ()
 main = do
   let p f i = parseString f mempty i
 --  print $ p parseSemVer "1.2.4"
+  print $ p parsePart "123a2"
   print $ p parseEnding "12.23" -- this works ATM
   print $ p parseEnding "12.23.123a2" -- this doesnt (maybe use notFollowedBy?)
   print "Done"
