@@ -28,8 +28,14 @@ skipDot = skipMany (char '.')
 parsePart::Parser NumberOrString
 parsePart = NOSI <$> try (integer <* notFollowedBy letter) <|> NOSS <$> some alphaNum
 
-parseEnding::Parser [NumberOrString]
-parseEnding = some $ parsePart <* skipDot
+parseEndSection::Parser [NumberOrString]
+parseEndSection = many $ parsePart <* skipDot
+
+parseEnd::Parser ([NumberOrString], [NumberOrString])
+parseEnd = do
+  first <- option [] (char '-' *> parseEndSection)
+  second <- option [] (char '+' *> parseEndSection)
+  return (first, second)
 
 parseSemVer:: Parser SemVer
 parseSemVer = do
@@ -38,15 +44,17 @@ parseSemVer = do
   minor <- decimal
   _ <- char '.'
   patch <- decimal
-  return (SemVer maj minor patch [] [])
+  (prer, meta) <- parseEnd
+  _ <- eof
+  return (SemVer maj minor patch prer meta)
 
 
 
 main:: IO ()
 main = do
   let p f i = parseString f mempty i
---  print $ p parseSemVer "1.2.4"
-  print $ p parsePart "123a2"
-  print $ p parseEnding "12.23" -- this works ATM
-  print $ p parseEnding "12.23.123a2" -- this doesnt (maybe use notFollowedBy?)
+  print $ p parseSemVer "1.2.4"
+  print $ p parseSemVer "1.0.0-x.7.z.92"
+  print $ p parseSemVer "1.0.0-gamma+002" -- this doesn't work yet
+  print $ p parseSemVer "1.0.0-beta+oof.sha.41af286"
   print "Done"
