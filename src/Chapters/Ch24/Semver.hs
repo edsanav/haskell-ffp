@@ -21,12 +21,26 @@ type Metadata = [NumberOrString]
 
 data SemVer = SemVer Major Minor Patch Release Metadata deriving (Show, Eq)
 
+instance Ord NumberOrString where
+  compare (NOSI x) (NOSI y) = compare x y
+  compare (NOSS x) (NOSS y) = compare x y
+  compare (NOSI _) (NOSS _) = LT
+  compare (NOSS _) (NOSI _) = GT
+
+-- mappend to compose compare results: mappend EQ LT = EQ
+instance Ord SemVer where
+  compare (SemVer mj1 mi1 p1 [] _) (SemVer mj2 mi2 p2 [_] _) =
+     foldl mappend EQ [compare mj1 mj2, compare mi1 mi2, compare p1 p2, GT] -- todo this doesn't work
+  compare (SemVer mj1 mi1 p1 r1 m1) (SemVer mj2 mi2 p2 r2 m2) =
+    foldl mappend EQ [compare mj1 mj2, compare mi1 mi2, compare p1 p2, compare r1 r2, compare m1 m2 ]
+
 
 skipDot::Parser ()
 skipDot = skipMany (char '.')
 
+-- careful, use decimal not integer because otherwise "+" sign will be considered part of the number
 parsePart::Parser NumberOrString
-parsePart = NOSI <$> try (integer <* notFollowedBy letter) <|> NOSS <$> some alphaNum
+parsePart = NOSI <$> try (decimal <* notFollowedBy letter) <|> NOSS <$> some alphaNum
 
 parseEndSection::Parser [NumberOrString]
 parseEndSection = many $ parsePart <* skipDot
