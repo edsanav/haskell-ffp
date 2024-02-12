@@ -1,13 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
 
 module Chapters.Ch24.Semver where
 
 import Control.Applicative
-import Data.ByteString (ByteString)
-
-import Test.Hspec
-import Text.RawString.QQ
 
 import Text.Trifecta
 
@@ -27,10 +22,12 @@ instance Ord NumberOrString where
   compare (NOSI _) (NOSS _) = LT
   compare (NOSS _) (NOSI _) = GT
 
--- mappend to compose compare results: mappend EQ LT = EQ
+-- mappend to compose compare results: mappend EQ LT = LT
 instance Ord SemVer where
   compare (SemVer mj1 mi1 p1 [] _) (SemVer mj2 mi2 p2 [_] _) =
-     foldl mappend EQ [compare mj1 mj2, compare mi1 mi2, compare p1 p2, GT] -- todo this doesn't work
+     foldl mappend EQ [compare mj1 mj2, compare mi1 mi2, compare p1 p2, GT]
+  compare (SemVer mj1 mi1 p1 [_] _) (SemVer mj2 mi2 p2 [] _) =
+     foldl mappend EQ [compare mj1 mj2, compare mi1 mi2, compare p1 p2, LT]
   compare (SemVer mj1 mi1 p1 r1 m1) (SemVer mj2 mi2 p2 r2 m2) =
     foldl mappend EQ [compare mj1 mj2, compare mi1 mi2, compare p1 p2, compare r1 r2, compare m1 m2 ]
 
