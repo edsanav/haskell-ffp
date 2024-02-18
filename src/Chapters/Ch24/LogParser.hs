@@ -46,6 +46,14 @@ exDate :: ByteString
 exDate = [r|\# 2025-02-07 -- dates not nececessarily sequential
 |]
 
+activityWithComment::String
+activityWithComment = "Breakfast high-protein -- should I try skippin bfast?"
+
+activityNoComment::String
+activityNoComment = "Exercising in high-grav gym"
+
+
+
 exEntry::ByteString
 exEntry = [r|08:00 Breakfast -- should I try skippin bfast?
 09:00 Bumped head, passed out
@@ -91,7 +99,8 @@ skipEOL::Parser()
 skipEOL = skipMany (oneOf "\n")
 
 skipComments:: Parser ()
-skipComments =  skipMany (string "--" *> skipMany (noneOf "\n"))
+--skipComments =  skipMany (string "--" *> skipMany (noneOf "\n"))
+skipComments =  skipSome (string "--" *> skipMany (noneOf "\n"))
 
 
 parseTime:: Parser Date
@@ -112,7 +121,10 @@ anyWord::Parser String
 anyWord = some $ try (alphaNum <|> char ' ' <|> singleDash)
 
 parseActivity::Parser Activity
-parseActivity = some (noneOf ("\n")) <* optional (char ' ') <* optional skipComments
+parseActivity = some (noneOf ("\n"))
+
+parseActivityWithComment::Parser Activity
+parseActivityWithComment = manyTill anyChar (try (string " --")) <* char ' ' <* skipComments
 
 parseEntry::Parser (Time, Activity)
 parseEntry = do
@@ -120,8 +132,8 @@ parseEntry = do
   _ <- char ':'
   minutes <- decimal
   _ <- char ' '
-  activity <- parseActivity
-  _ <- skipEOL
+  activity <- try parseActivityWithComment <|> parseActivity
+  skipEOL
   return (Time hours minutes , activity)
 
 parseSection::Parser (Date, Entries)
@@ -141,6 +153,7 @@ parseLog = do
 main::IO()
 main = do 
   print $ rpbs parseTime exDate
+  print $ rp parseActivity activityNoComment
+  print $ rp parseActivityWithComment activityWithComment
   print $ rpbs (some parseEntry) exEntry
-  print $ rpbs (some parseEntry) exEntry2
-  print $ rpbs parseLog example
+--  print $ rpbs parseLog example
