@@ -28,6 +28,8 @@ example = [r|-- wheee a comment
 21:15 Read
 22:00 Sleep
 
+-- blabla
+
 \# 2025-02-07 -- dates not nececessarily sequential
 08:00 Breakfast -- should I try skippin bfast?
 09:00 Bumped head, passed out
@@ -112,18 +114,12 @@ parseTime = do
   day <- decimal
   _ <- skipMany (char ' ')
   return $ Date year month day
-  
-singleDash:: Parser Char
-singleDash = char '-' <* notFollowedBy (char '-')
-
-anyWord::Parser String
-anyWord = some $ try (alphaNum <|> char ' ' <|> singleDash)
-
+ 
 parseActivity::Parser Activity
 parseActivity = some (noneOf ("\n") <* notFollowedBy (string " --"))
 
 parseActivityWithComment::Parser Activity
-parseActivityWithComment = manyTill anyChar (try (string " --") <|> try (string "\n")) <* skipMany (noneOf "\n")
+parseActivityWithComment = manyTill anyChar (try (string " --")) <* skipMany (noneOf "\n")
 
 parseEntry::Parser (Time, Activity)
 parseEntry = do
