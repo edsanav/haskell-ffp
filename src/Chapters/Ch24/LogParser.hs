@@ -99,8 +99,7 @@ skipEOL::Parser()
 skipEOL = skipMany (oneOf "\n")
 
 skipComments:: Parser ()
---skipComments =  skipMany (string "--" *> skipMany (noneOf "\n"))
-skipComments =  skipSome (string "--" *> skipMany (noneOf "\n"))
+skipComments =  skipMany (string "--" *> skipMany (noneOf "\n"))
 
 
 parseTime:: Parser Date
@@ -121,10 +120,10 @@ anyWord::Parser String
 anyWord = some $ try (alphaNum <|> char ' ' <|> singleDash)
 
 parseActivity::Parser Activity
-parseActivity = some (noneOf ("\n"))
+parseActivity = some (noneOf ("\n") <* notFollowedBy (string " --"))
 
 parseActivityWithComment::Parser Activity
-parseActivityWithComment = manyTill anyChar (try (string " --")) <* char ' ' <* skipComments
+parseActivityWithComment = manyTill anyChar (try (string " --") <|> try (string "\n")) <* skipMany (noneOf "\n")
 
 parseEntry::Parser (Time, Activity)
 parseEntry = do
@@ -132,7 +131,7 @@ parseEntry = do
   _ <- char ':'
   minutes <- decimal
   _ <- char ' '
-  activity <- try parseActivityWithComment <|> parseActivity
+  activity <- try  parseActivity <|> parseActivityWithComment
   skipEOL
   return (Time hours minutes , activity)
 
@@ -156,4 +155,4 @@ main = do
   print $ rp parseActivity activityNoComment
   print $ rp parseActivityWithComment activityWithComment
   print $ rpbs (some parseEntry) exEntry
---  print $ rpbs parseLog example
+  print $ rpbs parseLog example
