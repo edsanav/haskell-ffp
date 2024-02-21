@@ -67,25 +67,24 @@ newtype IPAddress6 = IPAddress6 Word64 deriving (Eq, Ord, Show)
 
 -- TODO finish me. Those are not decimals!
 
+parseIPv6part::Parser Word64
+parseIPv6part =  do
+  str <- manyTill anyChar (try (char ':'))
+  case str of 
+    "" ->  return . fromIntegral $ hexToDecimal "0"
+    x  ->  return . fromIntegral $  hexToDecimal x
+
 parseIPv6::Parser IPAddress6
 parseIPv6 = do
-  f1 <-  decimal
-  _ <- char ':'
-  f2 <-  decimal
-  _ <- char ':'
-  f3 <-  decimal
-  _ <- char ':'
-  f4 <-  decimal
-  _ <- char ':'
-  f5 <-  decimal
-  _ <- char ':'
-  f6 <-  decimal
-  _ <- char ':'
-  f7 <-  decimal
-  _ <- char ':'
-  f8 <-  decimal
-  _ <- char ':'
-  return $ IPAddress6(sum $ map fromInteger [
+  f1 <-  parseIPv6part
+  f2 <-  parseIPv6part
+  f3 <-  parseIPv6part
+  f4 <-  parseIPv6part
+  f5 <-  parseIPv6part
+  f6 <-  parseIPv6part
+  f7 <-  parseIPv6part
+  f8 <-  fromIntegral.hexToDecimal <$> manyTill anyChar eof
+  return $ IPAddress6(sum [
     f1 `shiftL` 112,
     f2 `shiftL` 96,
     f3 `shiftL` 80,
@@ -93,7 +92,7 @@ parseIPv6 = do
     f5 `shiftL` 48,
     f6 `shiftL` 32,
     f7 `shiftL` 16,
-    f8 `shiftL` 8
+    f8 `shiftL` 0
     ])
 
 main:: IO ()
