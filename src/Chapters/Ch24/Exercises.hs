@@ -6,11 +6,13 @@ import Chapters.Ch24.Utils (rp, parseNDigits)
 import Text.Trifecta
 import Data.Word
 import Data.Bits
-  
+
+import Debug.Trace
+
 import Data.Char (digitToInt, toUpper)
 
-hexToDecimal :: String -> Int
-hexToDecimal = sum . zipWith (*) (iterate (*16) 1) . reverse . map (digitToInt .toUpper)
+hexToDecimal :: String -> Integer
+hexToDecimal = sum . zipWith (*) (iterate (*16) 1) . reverse . map (fromIntegral .digitToInt .toUpper)
 
 parseDigit :: Parser Char
 parseDigit = choice $ fmap char "0123456789"
@@ -63,37 +65,22 @@ parseIPv4 = do
     forthOct `shiftL` 0]
     )
 
-newtype IPAddress6 = IPAddress6 Word64 deriving (Eq, Ord, Show)
+newtype IPAddress6 = IPAddress6 Integer deriving (Eq, Ord, Show)
 
--- TODO finish me. Those are not decimals!
+parseSections :: Parser [String]
+parseSections = sepBy (many hexDigit) (char ':')
 
-parseIPv6part::Parser Word64
-parseIPv6part =  do
-  str <- manyTill anyChar (try (char ':'))
-  case str of 
-    "" ->  return . fromIntegral $ hexToDecimal "0"
-    x  ->  return . fromIntegral $  hexToDecimal x
+expandSections:: [String] -> [String]
+expandSections xs = foldMap f xs
+  where f x = case x of
+                     "" -> replicate (9 - length xs) "0"
+                     _ -> [x]
 
-parseIPv6::Parser IPAddress6
-parseIPv6 = do
-  f1 <-  parseIPv6part
-  f2 <-  parseIPv6part
-  f3 <-  parseIPv6part
-  f4 <-  parseIPv6part
-  f5 <-  parseIPv6part
-  f6 <-  parseIPv6part
-  f7 <-  parseIPv6part
-  f8 <-  fromIntegral.hexToDecimal <$> manyTill anyChar eof
-  return $ IPAddress6(sum [
-    f1 `shiftL` 112,
-    f2 `shiftL` 96,
-    f3 `shiftL` 80,
-    f4 `shiftL` 64,
-    f5 `shiftL` 48,
-    f6 `shiftL` 32,
-    f7 `shiftL` 16,
-    f8 `shiftL` 0
-    ])
+parseIPv6:: Parser IPAddress6
+parseIPv6 = do 
+  sections <- parseSections
+  return $ IPAddress6 (sum (
+    zipWith shiftL (map hexToDecimal $ expandSections sections) [112, 96, 80, 64, 48, 32, 16, 0]))
 
 main:: IO ()
 main = do
@@ -108,5 +95,6 @@ main = do
   print $ rp parsePhone "1-123-456-7890"
   print $ rp parseIPv4 "172.16.254.1"
   print $ rp parseIPv4 "204.120.0.15"
-  print $ rp parseIPv6 ""
+  print $ rp parseIPv6 "FE80:0000:0000:0000:0202:B3FF:FE1E:8329"
+  print $ rp parseIPv6 "2001:DB8::8:800:200C:417A"
   print "Done"
