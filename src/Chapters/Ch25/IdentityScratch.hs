@@ -35,9 +35,14 @@ instance (Applicative f, Applicative g) => Applicative (Compose f g) where
   pure:: a -> Compose f g a
   pure x = Compose $ pure $ pure x
 
+  -- Imagine
+  -- bla =  pure (5+)::Compose [] Maybe (Int->Int)
+  -- ble =  pure (2)::Compose [] Maybe (Int)
+  -- then fgab is [Just (5+)]::[Maybe (Int -> Int)]
+  -- then :t fmap (<*>) fgab is: [Maybe Int -> Maybe Int]
+  -- and since fga is [Just (2)]::[Maybe Int]
+  -- we just need to do ap over those two: fmap (<*>) fgab  <*> fga
+  -- and then wrap it into Compose
   (<*>)::Compose f g (a -> b) -> Compose f g a -> Compose f g b
-  (<*>) (Compose (fgab)) (Compose fga) = undefined
+  (<*>) (Compose fgab) (Compose fga) = Compose $ fmap (<*>) fgab  <*> fga
   
--- TODO: finish this 
--- let bla = pure (5+)::Compose [] Maybe (Int->Int)
--- let ble = pure (2)::Compose [] Maybe (Int)
