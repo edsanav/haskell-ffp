@@ -40,6 +40,7 @@ instance (Applicative f, Applicative g) => Applicative (Compose f g) where
   -- ble =  pure (2)::Compose [] Maybe (Int)
   -- then fgab is [Just (5+)]::[Maybe (Int -> Int)]
   -- then :t fmap (<*>) fgab is: [Maybe Int -> Maybe Int]
+  -- also :t (<*>) Just (5+) is Maybe Int -> Maybe Int 
   -- and since fga is [Just (2)]::[Maybe Int]
   -- we just need to do ap over those two: fmap (<*>) fgab  <*> fga
   -- and then wrap it into Compose
@@ -48,5 +49,10 @@ instance (Applicative f, Applicative g) => Applicative (Compose f g) where
 
 
 instance (Foldable f, Foldable g) => Foldable (Compose f g) where
-  -- TODO: check this with example
   foldMap fm (Compose ta) = (foldMap.foldMap) fm ta
+
+instance (Traversable f, Traversable g) => Traversable (Compose f g) where
+  
+-- (a -> f b) -> t a -> f (t b)
+  traverse :: (a -> f' b) -> Compose f g a -> f' (t b)
+  traverse f (Compose fga) = Compose <$> ((fmap.fmap) f fga) -- still not working, try to review types
