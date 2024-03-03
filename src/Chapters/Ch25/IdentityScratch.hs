@@ -52,7 +52,8 @@ instance (Foldable f, Foldable g) => Foldable (Compose f g) where
   foldMap fm (Compose ta) = (foldMap.foldMap) fm ta
 
 instance (Traversable f, Traversable g) => Traversable (Compose f g) where
-  
--- (a -> f b) -> t a -> f (t b)
-  traverse :: (a -> f' b) -> Compose f g a -> f' (t b)
-  traverse f (Compose fga) = Compose <$> ((fmap.fmap) f fga) -- still not working, try to review types
+
+    -- similarly to the fmap.fmap, you need traverse.traverse to get pass the two level depth of traversables.
+    -- Then you just apply Compose to the resulting structure
+    traverse :: Applicative h => (a -> h b) -> Compose f g a -> h (Compose f g b)
+    traverse f (Compose x) = Compose <$> (traverse . traverse) f x
