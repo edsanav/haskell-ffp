@@ -39,7 +39,9 @@ instance (Applicative f, Applicative g) => Applicative (Compose f g) where
   -- bla =  pure (5+)::Compose [] Maybe (Int->Int)
   -- ble =  pure (2)::Compose [] Maybe (Int)
   -- then fgab is [Just (5+)]::[Maybe (Int -> Int)]
-  -- then :t fmap (<*>) fgab is: [Maybe Int -> Maybe Int]
+  -- :tt (<*>) is f (a -> b) -> fa -> fb 
+  -- then :t fmap (<*>) fgab is: [Maybe Int -> Maybe Int] 
+  -- (first arg, applied inside the outer monad)
   -- also :t (<*>) Just (5+) is Maybe Int -> Maybe Int 
   -- and since fga is [Just (2)]::[Maybe Int]
   -- we just need to do ap over those two: fmap (<*>) fgab  <*> fga
