@@ -1,6 +1,7 @@
 module Chapters.Ch26.MaybeScratch where
 
 import Chapters.Ch25.IdentityScratch (Identity)
+import Data.Either (Either)
 
 newtype MaybeT m a = MaybeT {runMaybeT:: m (Maybe a)}
 
@@ -52,4 +53,16 @@ instance Monad m => Monad (EitherT e m) where
     v <- ema
     case v of 
       Left e -> return (Left e)
-      Right a -> runEitherT $ f a 
+      Right a -> runEitherT $ f a
+
+swapEitherT::(Functor m) => EitherT e m a -> EitherT a m e
+swapEitherT (EitherT ema) = EitherT $ fmap sw ema
+  where sw (Left e) = Right e
+        sw (Right a) = Left a 
+
+eitherT::(Monad m) => (a -> m c) -> (b -> m c) -> EitherT a m b -> m c
+eitherT f g (EitherT ema) = do
+  v <- ema
+  case v of
+    Left a -> f a
+    Right b -> g b 
