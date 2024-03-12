@@ -11,7 +11,7 @@ instance (Applicative m) => Applicative (ReaderT r m) where
   -- or this without unpacking the function and just fmaping the ap
   -- in the end consider the function as any other structure as it was MaybeT
 --  (<*>) (ReaderT fmab) (ReaderT rma) = ReaderT $ fmap (<*>) fmab <*> rma
-1
+
 
 instance (Monad m) => Monad (ReaderT r m) where
   return = pure
