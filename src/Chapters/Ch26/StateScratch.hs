@@ -12,4 +12,15 @@ instance (Functor m) => Functor (StateT s m) where
 instance (Monad m) => Applicative (StateT s m) where 
   pure x = StateT (\s -> pure (x, s))
   
-  (<*>) (StateT smfab) (StateT sma) = undefined
+  (<*>) (StateT smfab) (StateT sma) = StateT (\s -> do
+                                        (fab, s1) <- smfab s
+                                        (a, s2) <- sma s1
+                                        return (fab a, s2)
+                                      ) 
+
+instance (Monad m) => Monad (StateT s m) where
+  return = pure
+  (StateT sma) >>= f = StateT (\s -> do
+                (a, s1) <- sma s
+                runStateT (f a) s1
+)
