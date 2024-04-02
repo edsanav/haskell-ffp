@@ -37,4 +37,5 @@ executable haskell-from-first
                        attoparsec,
                        parsec,
                        aeson,
-                       scientific
+                       scientific,
+                       scotty
