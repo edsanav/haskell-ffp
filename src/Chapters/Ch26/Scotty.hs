@@ -8,6 +8,7 @@ import Control.Monad.Trans.Class
 import Data.Monoid (mconcat)
 import Control.Monad.Trans.Except
 import Control.Monad 
+import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.State.Strict hiding (get)
 
@@ -66,3 +67,13 @@ main = scotty 3000 $ do
       mconcat ["<h1>Scotty, ",
             beam,
             " me up!</h1>"]
+  
+  -- liftIO
+  get "/liftio/:word" $ do
+    beam <- param "word"
+    liftIO (putStrLn "hello")
+    
+    html $
+      mconcat ["<h1>Scotty, ",
+                          beam,
+                          " me up!</h1>"]

@@ -1,7 +1,12 @@
 module Chapters.Ch26.ReaderScratch where
 
+import Control.Monad.IO.Class
+import Control.Monad 
+  
 newtype ReaderT r m a = ReaderT { runReaderT :: r -> m a }
-
+class MonadTrans t where
+  lift :: (Monad m) => m a -> t m a
+  
 instance (Functor m) => Functor (ReaderT r m) where
   fmap f (ReaderT rma) = ReaderT $ (fmap.fmap) f rma
 
@@ -19,3 +24,9 @@ instance (Monad m) => Monad (ReaderT r m) where
   (ReaderT rma) >>= f = ReaderT $ \r -> do 
     a <- rma r
     runReaderT (f a) r
+
+instance MonadTrans (ReaderT r) where
+  lift = ReaderT . const
+
+instance (MonadIO m) => MonadIO (ReaderT r m) where
+  liftIO = lift.liftIO

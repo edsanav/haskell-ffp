@@ -2,9 +2,14 @@ module Chapters.Ch26.MaybeScratch where
 
 import Chapters.Ch25.IdentityScratch (Identity)
 import Data.Either (Either)
+import Control.Monad.IO.Class
+import Control.Monad 
+
 
 newtype MaybeT m a = MaybeT {runMaybeT:: m (Maybe a)}
-
+class MonadTrans t where
+  lift :: (Monad m) => m a -> t m a
+  
 instance (Functor m) => Functor (MaybeT m) where 
   fmap f (MaybeT ma) = MaybeT $ (fmap.fmap) f ma
   
@@ -35,6 +40,12 @@ instance (Monad m) => Monad (MaybeT m) where
     case v of 
       Nothing -> return Nothing
       Just y -> runMaybeT (f y)
+
+instance MonadTrans MaybeT where
+  lift = MaybeT . fmap Just
+  
+instance (MonadIO m) => MonadIO (MaybeT m) where
+  liftIO = lift.liftIO
 
 newtype EitherT e m a = EitherT { runEitherT :: m (Either e a) }
  

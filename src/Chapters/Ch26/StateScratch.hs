@@ -1,6 +1,8 @@
 module Chapters.Ch26.StateScratch where
 
 import Data.Bifunctor (first)
+import Control.Monad.IO.Class
+
 
 class MonadTrans t where
   lift :: (Monad m) => m a -> t m a
@@ -36,3 +38,7 @@ instance MonadTrans (StateT s) where
 -- Other example from: https://github.com/heitor-lassarote/haskell-programming-from-first-principles/blob/master/26%20-%20Monad%20transformers/StateT.hs
 --instance MonadTrans (StateT s) where
 --    lift mas = StateT $ \s -> (, s) <$> mas
+
+instance (MonadIO m) => MonadIO (StateT s m) where
+  liftIO = lift.liftIO
+
