@@ -13,6 +13,9 @@ import Control.Monad.Trans.Reader
 import Control.Monad.Trans.State.Strict hiding (get)
 
 -- for reference
+-- newtype ActionT e (m :: * -> *) a
+--  = ActionT {runAM :: ExceptT (ActionError e) (ReaderT ActionEnv (StateT ScottyResponse m)) a}
+   
 -- type ActionM = ActionT Text IO
 
 main = scotty 3000 $ do

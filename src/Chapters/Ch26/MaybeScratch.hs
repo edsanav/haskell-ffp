@@ -15,7 +15,7 @@ instance (Functor m) => Functor (MaybeT m) where
   
 instance (Applicative m) => Applicative (MaybeT m) where 
   pure x = MaybeT (pure (pure x))
-  
+
   (MaybeT fab) <*> (MaybeT mma) = MaybeT $ fmap (<*>) fab <*> mma
   
 
