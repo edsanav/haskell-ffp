@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Chapters.Ch26.ScottyExercise where
 
 import Control.Monad.Trans.Class
@@ -23,4 +25,25 @@ type Handler = ActionT Text (ReaderT Config IO)
 
 bumpBoomp :: Text -> M.Map Text Integer -> (M.Map Text Integer, Integer)
 bumpBoomp k m = (newMap, newMap M.! k)
-  where newMap = M.insertWith (+) k 1 m 
+  where newMap = M.insertWith (+) k 1 m
+
+app :: Scotty ()
+app =
+  get "/:key" $ do
+    unprefixed <- param "key"
+    let key' = mappend undefined unprefixed
+    newInteger <- undefined
+
+    html $
+      mconcat [ "<h1>Success! Count was: "
+      , TL.pack $ show newInteger
+      , "</h1>"
+      ]
+
+main :: IO ()
+main = do
+  [prefixArg] <- getArgs
+  counter <- newIORef M.empty
+  let config = Config counter (TL.pack prefixArg)
+      runR = undefined
+  scottyT 3000 runR app
