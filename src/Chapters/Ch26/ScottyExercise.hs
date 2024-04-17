@@ -19,6 +19,9 @@ data Config = Config {
   counts :: IORef (M.Map Text Integer)
   , prefix :: Text
 }
+-- :t prefix
+--ghci> :t prefix
+--prefix :: Config -> Text
 
 type Scotty = ScottyT Text (ReaderT Config IO)
 type Handler = ActionT Text (ReaderT Config IO)
@@ -27,13 +30,26 @@ bumpBoomp :: Text -> M.Map Text Integer -> (M.Map Text Integer, Integer)
 bumpBoomp k m = (newMap, newMap M.! k)
   where newMap = M.insertWith (+) k 1 m
 
+
+
+
+ex1::ReaderT Config IO Text
+ex1 = ReaderT $ return.prefix
+
+ex2:: ReaderT Config IO (M.Map Text Integer)
+ex2 = ReaderT $ readIORef . counts
+
 app :: Scotty ()
 app =
   get "/:key" $ do
-    unprefixed <- param "key"
-    let key' = mappend undefined unprefixed
-    newInteger <- undefined
-
+    unprefixed <- param "key" :: Handler Text
+--    pref <- (lift $ ReaderT $ return.prefix) :: Handler Text
+    pref <- lift $ asks prefix
+    let key' = mappend pref unprefixed
+    counter <- lift $ ReaderT $ readIORef . counts
+    counter2 <- lift $ ReaderT $ return . counts
+    let bla = atomicModifyIORef counter2 (bumpBoomp key')
+    newInteger <- lift $ ReaderT $ const bla  -- not sure about this
     html $
       mconcat [ "<h1>Success! Count was: "
       , TL.pack $ show newInteger
