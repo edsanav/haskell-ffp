@@ -47,8 +47,8 @@ app =
     pref <- lift $ asks prefix
     let key' = mappend pref unprefixed
     counter <- lift $ ReaderT $ readIORef . counts
-    counter2 <- lift $ ReaderT $ return . counts
-    let bla = atomicModifyIORef counter2 (bumpBoomp key')
+    counterRef <- lift $ ReaderT $ return . counts
+    let bla = atomicModifyIORef counterRef (bumpBoomp key')
     newInteger <- lift $ ReaderT $ const bla  -- not sure about this
     html $
       mconcat [ "<h1>Success! Count was: "
@@ -59,7 +59,7 @@ app =
 main :: IO ()
 main = do
   [prefixArg] <- getArgs
-  counter <- newIORef M.empty
-  let config = Config counter (TL.pack prefixArg)
-      runR = undefined
+  countR <- newIORef M.empty
+  let config = Config countR (TL.pack prefixArg)
+      runR m = runReaderT m config
   scottyT 3000 runR app
