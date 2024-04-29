@@ -6,29 +6,53 @@ import Control.Monad (unless)
   
 type IOState s = StateT s IO 
 
-data Choice = Odds | Evens deriving (Show, Eq)
+data Player = OddsPlayer String | EvensPlayer String deriving (Show, Eq)
 
-data Player = Player String Choice deriving (Show, Eq)
+type Victories = Int
+type OddsNumber = Int
+type EvensNumber = Int
 
-data Play = Play Player Int deriving (Show, Eq)
+data Counter = Counter {getOddsP::(Player, Victories),getEvensP::(Player, Victories)} deriving (Show, Eq)
 
---data Counter = 
+playOld:: (Player, Int) -> (Player, Int) -> Player
+playOld (p1@(OddsPlayer _), x) (p2@(EvensPlayer _), y) = if odd (x + y) then p1 else p2
+playOld (p1@(EvensPlayer _), x) (p2@(OddsPlayer _), y) = if even (x + y) then p1 else p2
+playOld _ _ = error "Invalid play"
 
-play:: Play -> Play -> Player
-play (Play p1@(Player _ c1) x) (Play p2@(Player _ _) y) = winner
-  where evenResult = even (x + y) 
-        winner = if (evenResult && c1 == Evens) || (not evenResult && c1 == Odds) 
-                  then p1 
-                  else p2
+play::OddsNumber -> EvensNumber -> Counter -> (Counter, Player)
+play x y (Counter (oddsP, oddsV) (evensP, evensV)) = 
+  if odd (x + y) 
+  then 
+    let finalC = Counter (oddsP, oddsV + 1) (evensP, evensV)
+    in (finalC, oddsP) 
+  else
+    let finalC = Counter(oddsP, oddsV) (evensP, evensV+1)
+    in (finalC, evensP)
 
+game :: IOState Counter Player
+game = do 
+   c <- get
+   _ <- lift $ putStr "P:"
+   oddsPlay <- lift $ fmap (read::String -> Int) getLine
+   _ <- lift $ putStr "P:"
+   evensPlay <- lift $ fmap (read::String -> Int) getLine
+   _ <- put $ play oddsPlay evensPlay c 
+   return odds
 
-loop :: IOState () ()
+loop :: IOState Counter ()
 loop = do 
   _ <- lift $ putStrLn "Choose a number between 0 and 5"
   myNumber <- lift $ fmap (read::String -> Int) getLine
   unless (myNumber > 5) loop
 
-  
+
+startGame1::IO Counter
+startGame1 = do
+  _ <- putStrLn "-- P is Player"
+  _ <- putStrLn "-- C is Computer"
+  _ <- putStrLn "-- Playser is odds, Computer is evens"
+  return $ Counter (OddsPlayer "P",  0) (EvensPlayer "C", 0)
+
 loopExample :: IO ()
 loopExample = do 
   inp <- getLine
@@ -40,4 +64,6 @@ loopExample = do
       loopExample
   
 main :: IO ()
-main = fst <$> runStateT loop ()
+main = do
+  initCounter <- startGame1
+  fst <$> runStateT loop initCounter
