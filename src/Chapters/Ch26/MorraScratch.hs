@@ -6,7 +6,11 @@ import Control.Monad (unless)
   
 type IOState s = StateT s IO 
 
-data Player = OddsPlayer String | EvensPlayer String deriving (Show, Eq)
+data Player = OddsPlayer String | EvensPlayer String deriving (Eq)
+
+instance Show Player where
+  show (OddsPlayer pId) = pId
+  show (EvensPlayer pId) = pId
 
 type Victories = Int
 type OddsNumber = Int
@@ -29,22 +33,31 @@ play x y (Counter (oddsP, oddsV) (evensP, evensV)) =
     let finalC = Counter(oddsP, oddsV) (evensP, evensV+1)
     in (finalC, evensP)
 
-game :: IOState Counter Player
+game :: IOState Counter Counter
 game = do 
    c <- get
    _ <- lift $ putStr "P:"
    oddsPlay <- lift $ fmap (read::String -> Int) getLine
-   _ <- lift $ putStr "P:"
+   _ <- lift $ putStr "C:"
    evensPlay <- lift $ fmap (read::String -> Int) getLine
-   _ <- put $ play oddsPlay evensPlay c 
-   return odds
+   let (newCounter, winner) =  play oddsPlay evensPlay c
+   _ <- lift $ putStrLn (show winner ++ " wins")
+   _ <- put newCounter
+   return newCounter
 
 loop :: IOState Counter ()
 loop = do 
-  _ <- lift $ putStrLn "Choose a number between 0 and 5"
-  myNumber <- lift $ fmap (read::String -> Int) getLine
-  unless (myNumber > 5) loop
+  c <- game
+  let w = haveWinner c
+  case w of 
+    Just p -> lift $ putStrLn $ "-- "++ show p++" wins the game!"
+    _ -> loop
 
+haveWinner::Counter -> Maybe Player 
+haveWinner (Counter (oP, odsV) (evP, evsV))
+  | odsV >= 3 = Just oP
+  | evsV >= 3 = Just evP
+  | otherwise = Nothing
 
 startGame1::IO Counter
 startGame1 = do
@@ -53,15 +66,6 @@ startGame1 = do
   _ <- putStrLn "-- Playser is odds, Computer is evens"
   return $ Counter (OddsPlayer "P",  0) (EvensPlayer "C", 0)
 
-loopExample :: IO ()
-loopExample = do 
-  inp <- getLine
-  case inp of 
-    "END" -> putStrLn "Finishing..."
-    x -> do
-      _ <- putStrLn ("Received "++x++ " as input")
-      _ <- putStrLn "New loop iteration"
-      loopExample
   
 main :: IO ()
 main = do
