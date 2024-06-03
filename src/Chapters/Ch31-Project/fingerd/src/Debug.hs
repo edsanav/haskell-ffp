@@ -18,9 +18,7 @@ logAndEcho sock = forever $ do
 
 main :: IO ()
 main = withSocketsDo $ do
-  addrinfos <- getAddrInfo
-        (Just (defaultHints {addrFlags =[AI_PASSIVE]}))
-         Nothing (Just "79")
+  addrinfos <- getAddrInfo (Just (defaultHints {addrFlags =[AI_PASSIVE]})) Nothing (Just "79")
   let serveraddr = head addrinfos
   sock <- socket (addrFamily serveraddr) Stream defaultProtocol
   bind sock $ addrAddress serveraddr
