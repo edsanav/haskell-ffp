@@ -35,3 +35,14 @@ executable fingerd
                     ,  sqlite-simple
                     ,  text
 
+executable fingerdadd
+  ghc-options:         -Wall
+  hs-source-dirs:      src
+  main-is:             Add.hs
+  default-language:    Haskell2010
+  build-depends:       base >= 4.7 && < 5
+                    ,  bytestring
+                    ,  network
+                    ,  raw-strings-qq
+                    ,  sqlite-simple
+                    ,  text
