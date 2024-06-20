@@ -46,6 +46,11 @@ instance ToRow User where
 insertUserQuery :: Query
 insertUserQuery = "INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)"
 
+updateUserQuery :: Query
+updateUserQuery = undefined
+
+getUserQuery :: Query
+getUserQuery = "SELECT * from users where username = ?"
 
 data DuplicateData = DuplicateData deriving (Eq, Show, Typeable)
 
@@ -54,10 +59,26 @@ instance Exception DuplicateData
 
 type UserRow = (Null, Text, Text, Text, Text, Text)
 
+getUser::Connection -> Text -> IO (Maybe User)
+getUser conn username = do
+  results <- query conn getUserQuery (Only username)
+  case results of
+    [] -> return Nothing
+    [user] -> return $ Just user
+    _ -> throwIO DuplicateData
+
 insertUser::Connection -> User -> IO ()
 insertUser conn User {..} = do
   _ <- execute conn insertUserQuery (Null, username, shell, homeDirectory, realName, phone)
   return ()
+
+modifyUser::Connection -> User -> IO ()
+modifyUser conn User {..} = do 
+  maybeUser <- getUser conn username
+  case maybeUser of 
+    Nothing -> do
+      Prelude.putStrLn $ "Couldn't find matching user for username:" ++ show (T.strip username)
+    Just _ -> execute conn updateUserQuery (username, shell, homeDirectory, realName, phone, id) -- TODO fixme
 
 formatUser :: User -> ByteString
 formatUser (User _ username shell homeDir realName _) = BS.concat
@@ -67,6 +88,7 @@ formatUser (User _ username shell homeDir realName _) = BS.concat
    "Shell: ", e shell,  "\n"
  ]
  where e = encodeUtf8
+
 
 
 handleQuery :: Connection -> Socket -> IO ()
