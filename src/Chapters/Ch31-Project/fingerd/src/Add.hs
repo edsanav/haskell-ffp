@@ -47,7 +47,7 @@ insertUserQuery :: Query
 insertUserQuery = "INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)"
 
 updateUserQuery :: Query
-updateUserQuery = undefined
+updateUserQuery = "UPDATE users SET username = ?, shell = ?, homeDirectory = ?, realName = ?, phone = ? WHERE id = ?"
 
 getUserQuery :: Query
 getUserQuery = "SELECT * from users where username = ?"
@@ -74,12 +74,14 @@ insertUser conn User {..} = do
 
 modifyUser::Connection -> User -> IO ()
 modifyUser conn User {..} = do 
-  maybeUser <- getUser conn username
+  maybeUser <- getUser conn $ T.strip username
   case maybeUser of 
     Nothing -> do
       Prelude.putStrLn $ "Couldn't find matching user for username:" ++ show (T.strip username)
-    Just _ -> execute conn updateUserQuery (username, shell, homeDirectory, realName, phone, id) -- TODO fixme
-
+    Just (User theId _ _ _ _ _) -> do
+      _ <- execute conn updateUserQuery (username, shell, homeDirectory, realName, phone, theId) -- TODO fixme
+      return ()
+      
 formatUser :: User -> ByteString
 formatUser (User _ username shell homeDir realName _) = BS.concat
  [ "Login: ", e username, "\t\t\t\t",
@@ -89,12 +91,12 @@ formatUser (User _ username shell homeDir realName _) = BS.concat
  ]
  where e = encodeUtf8
 
-
-
 handleQuery :: Connection -> Socket -> IO ()
 handleQuery dbConn soc = do
   _ <- recv soc 1024
-  insertUser dbConn (User 0 "test" "/bin/sh" "/home/test" "Bob" "+34")
+  modifyUser dbConn (User 4 "callen" "/bin/sh" "/home/testNEW" "callen" "+34")
+--  insertUser dbConn (User 0 "test" "/bin/sh" "/home/test" "Bob" "+34")
+  
     
 handleQueries :: Connection -> Socket -> IO ()
 handleQueries dbConn sock = forever $ do
