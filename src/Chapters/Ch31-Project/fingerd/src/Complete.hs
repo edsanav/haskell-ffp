@@ -92,22 +92,31 @@ returnUser dbConn soc username = do
 
 handleQuery::Connection -> Socket -> IO ()
 handleQuery dbConn soc = do
-  threadDelay 10000000 -- sleep for 10 seconds, simulate slow operation
+  -- threadDelay 10000000 -- sleep for 10 seconds, simulate slow operation
   msg <- recv soc 1024
   let cleanMsg = T.strip $ decodeUtf8 msg
-  case cleanMsg of
-    -- TODO proper parsing here
-    "GET ALL" -> returnUsers dbConn soc
-    "GET"-> returnUser dbConn soc "test"
-    "INSERT"  -> Prelude.putStrLn "INSERT command received with"
-    "UPDATE" -> Prelude.putStrLn "UPDATE COMMAND RECEIVED"
-    _ -> Prelude.putStrLn "No instruction provided"
+  case T.words cleanMsg of
+    ["GET", "ALL"] -> returnUsers dbConn soc
+    ["GET", xs] -> returnUser dbConn soc xs
+    _ -> sendAll soc $ encodeUtf8 $ "Invalid query: " <> cleanMsg <> "\n"
+
+handleWrite::Connection -> Socket -> IO ()
+handleWrite dbConn soc = do
+  msg <- recv soc 1024
+  let cleanMsg = T.strip $ decodeUtf8 msg
+  case T.words cleanMsg of
+    "INSERT":xs  -> Prelude.putStrLn $ "INSERT command received with"++ T.unpack (T.concat xs)
+    "UPDATE":xs -> Prelude.putStrLn $ "UPDATE COMMAND RECEIVED "++ T.unpack (T.concat xs)
+    _ -> sendAll soc $ encodeUtf8 $ "Invalid write command: " <> cleanMsg <> "\n"
 
 handleQueries :: Connection -> Socket -> IO ()
 handleQueries dbConn sock = forever $ do
   (soc, _) <- accept sock
   Prelude.putStrLn "Got connection, handle query"
-  handleQuery dbConn soc
+  (SockAddrInet port _)  <- getSocketName sock
+  case port of
+    79 -> handleQuery dbConn soc
+    _ -> handleWrite dbConn soc
   S.close soc
 
 
@@ -122,14 +131,13 @@ getSocket portNumb = withSocketsDo $ do
 
 main :: IO ()
 main = withSocketsDo $ do
-  sock <- getSocket "79"
-  sock2 <- getSocket "81"
+  querySock <- getSocket "79"
+  insertSock <- getSocket "81"
 
   conn <- open "finger.db"
 
-  forkIO (handleQueries conn sock2)
-  handleQueries conn sock
+  _ <- forkIO (handleQueries conn querySock)
+  _ <- handleQueries conn insertSock
 
---  forkIO (handleQueries conn sock)
-
-  S.close sock
+  S.close querySock
+  S.close insertSock
