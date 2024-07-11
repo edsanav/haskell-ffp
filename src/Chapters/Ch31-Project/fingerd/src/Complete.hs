@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Main (main) where
@@ -8,7 +9,9 @@ import Control.Concurrent (threadDelay, forkIO)
 import Data.Foldable (for_)
 import Data.Text (Text)
 import Data.List (intersperse)
+import qualified Data.ByteString as BS
 import Data.Text.Encoding ( decodeUtf8, encodeUtf8, decodeUtf8 )
+import qualified Data.Text.Lazy as TL
 import qualified Data.Text as T
 import Database.SQLite.Simple hiding (close)
 import qualified Database.SQLite.Simple as SQLite
@@ -21,6 +24,9 @@ import qualified Data.ByteString as BS
 import Network.Socket.ByteString (recv, sendAll)
 import Control.Exception (throwIO, Exception)
 import Data.Typeable (Typeable)
+import GHC.Generics
+
+import Data.Aeson
 
 -- https://github.com/crabmusket/haskell-simple-concurrency/blob/master/src/tutorial.md
 -- example: https://smunix.github.io/chimera.labs.oreilly.com/books/1230000000929/ch12.html
@@ -33,7 +39,7 @@ data User = User {
   , homeDirectory :: Text
   , realName :: Text
   , phone :: Text
-} deriving (Eq, Show)
+} deriving (Generic, Eq, Show)
 
 instance FromRow User where
   fromRow = User <$> field
@@ -46,6 +52,11 @@ instance FromRow User where
 instance ToRow User where
   toRow (User id_ username shell homeDir realName phone) = toRow (id_, username, shell, homeDir, realName, phone)
 
+instance FromJSON User
+
+instance ToJSON User
+
+
 data DuplicateData = DuplicateData deriving (Eq, Show, Typeable)
 instance Exception DuplicateData
 
@@ -55,6 +66,11 @@ allUsers = "SELECT * FROM USERS"
 getUserQuery :: Query
 getUserQuery = "SELECT * from users where username = ?"
 
+insertUserQuery :: Query
+insertUserQuery = "INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)"
+
+updateUserQuery :: Query
+updateUserQuery = "UPDATE users SET username = ?, shell = ?, homeDirectory = ?, realName = ?, phone = ? WHERE id = ?"
 
 formatUser :: User -> ByteString
 formatUser (User _ username shell homeDir realName _) = BS.concat
@@ -90,24 +106,46 @@ returnUser dbConn soc username = do
       return ()
     Just user -> sendAll soc (formatUser user)
 
+-- UPDATE {"userId":0, "username":"pepe", "shell":"/bin/bash","homeDirectory":"/home/nuNEW","realName":"Pepe","phone":"+35"}
+modifyUser::Connection -> User -> IO ()
+modifyUser conn User {..} = do
+  maybeUser <- getUser conn $ T.strip username
+  case maybeUser of
+    Nothing -> do
+      Prelude.putStrLn $ "Couldn't find matching user for username:" ++ show (T.strip username)
+    Just (User theId _ _ _ _ _) -> do
+      _ <- execute conn updateUserQuery (username, shell, homeDirectory, realName, phone, theId)
+      return ()
+
+-- INSERT {"userId":0, "username":"pepe", "shell":"/bin/bash","homeDirectory":"/home/nu","realName":"Pepe","phone":"+35"}
+insertUser::Connection -> User -> IO ()
+insertUser conn User {..} = do
+  _ <- execute conn insertUserQuery (Database.SQLite.Simple.Types.Null, username, shell, homeDirectory, realName, phone)
+  return ()
+
+
 handleQuery::Connection -> Socket -> IO ()
 handleQuery dbConn soc = do
   -- threadDelay 10000000 -- sleep for 10 seconds, simulate slow operation
   msg <- recv soc 1024
   let cleanMsg = T.strip $ decodeUtf8 msg
-  case T.words cleanMsg of
-    ["GET", "ALL"] -> returnUsers dbConn soc
-    ["GET", xs] -> returnUser dbConn soc xs
-    _ -> sendAll soc $ encodeUtf8 $ "Invalid query: " <> cleanMsg <> "\n"
+  case cleanMsg of
+    "" -> returnUsers dbConn soc
+    name -> returnUser dbConn soc name
 
 handleWrite::Connection -> Socket -> IO ()
 handleWrite dbConn soc = do
   msg <- recv soc 1024
   let cleanMsg = T.strip $ decodeUtf8 msg
   case T.words cleanMsg of
-    "INSERT":xs  -> Prelude.putStrLn $ "INSERT command received with"++ T.unpack (T.concat xs)
-    "UPDATE":xs -> Prelude.putStrLn $ "UPDATE COMMAND RECEIVED "++ T.unpack (T.concat xs)
+    "INSERT":xs -> case deserializeUser (BS.fromStrict $ encodeUtf8  $ T.concat xs) of
+                  Nothing -> Prelude.putStrLn $ "Couldn't parse" ++ T.unpack (T.concat xs)
+                  (Just user) -> insertUser dbConn user
+    "UPDATE":xs -> case deserializeUser (BS.fromStrict $ encodeUtf8  $ T.concat xs)  of
+                   Nothing -> Prelude.putStrLn $ "Couldn't parse" ++ T.unpack (T.concat xs)
+                   (Just user) -> modifyUser dbConn user
     _ -> sendAll soc $ encodeUtf8 $ "Invalid write command: " <> cleanMsg <> "\n"
+  where deserializeUser jUser = decode jUser
 
 handleQueries :: Connection -> Socket -> IO ()
 handleQueries dbConn sock = forever $ do

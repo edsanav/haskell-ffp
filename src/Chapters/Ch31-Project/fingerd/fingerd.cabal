@@ -34,6 +34,7 @@ executable fingerd
                     ,  raw-strings-qq
                     ,  sqlite-simple
                     ,  text
+                    ,  aeson
 
 executable fingerdadd
   ghc-options:         -Wall
@@ -46,6 +47,7 @@ executable fingerdadd
                     ,  raw-strings-qq
                     ,  sqlite-simple
                     ,  text
+                    ,  aeson
 
 executable fingerdcomplete
   ghc-options:         -Wall
@@ -58,3 +60,4 @@ executable fingerdcomplete
                     ,  raw-strings-qq
                     ,  sqlite-simple
                     ,  text
+                    ,  aeson
